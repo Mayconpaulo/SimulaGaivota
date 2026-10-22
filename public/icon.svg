@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="50%" stop-color="#14532d"/>
+      <stop offset="100%" stop-color="#052e16"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a"/>
+      <stop offset="50%" stop-color="#eab308"/>
+      <stop offset="100%" stop-color="#ca8a04"/>
+    </linearGradient>
+    <linearGradient id="glass" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0.05"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000000" flood-opacity="0.45"/>
+    </filter>
+  </defs>
+
+  <!-- iOS Squircle Background -->
+  <rect width="512" height="512" rx="115" fill="url(#bg)"/>
+  
+  <!-- Subtle Liquid Glass Highlight Overlay -->
+  <rect x="16" y="16" width="480" height="480" rx="100" fill="url(#glass)" stroke="#ffffff" stroke-width="2" stroke-opacity="0.2"/>
+
+  <!-- Military Communications Lightning & Torches Motif -->
+  <g filter="url(#shadow)">
+    <!-- Radio Wave Rings -->
+    <circle cx="256" cy="230" r="140" fill="none" stroke="#22c55e" stroke-width="4" stroke-opacity="0.3" stroke-dasharray="12 8"/>
+    <circle cx="256" cy="230" r="90" fill="none" stroke="#22c55e" stroke-width="5" stroke-opacity="0.5"/>
+
+    <!-- Communications Crossed Torches / Lightning -->
+    <path d="M190 290 L322 170 M322 290 L190 170" stroke="url(#gold)" stroke-width="12" stroke-linecap="round"/>
+    
+    <!-- Big Official Military Gaivota (Visto ✓) -->
+    <path d="M150 250 L225 335 L380 155" fill="none" stroke="#4ade80" stroke-width="36" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M150 250 L225 335 L380 155" fill="none" stroke="#ffffff" stroke-width="14" stroke-linecap="round" stroke-linejoin="round" stroke-opacity="0.8"/>
+  </g>
+
+  <!-- Subtitle Text -->
+  <text x="256" y="430" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Plus Jakarta Sans', sans-serif" font-size="34" font-weight="800" fill="#f8fafc" letter-spacing="4">
+    SIMULAGAIVOTA
+  </text>
+  <text x="256" y="465" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif" font-size="20" font-weight="600" fill="#86efac" letter-spacing="2">
+    CFST · COMUNICAÇÕES
+  </text>
+</svg>

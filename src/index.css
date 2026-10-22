@@ -1,0 +1,113 @@
+@import "tailwindcss";
+
+@theme {
+  /* Verde Militar Doutrinário (Verde Oliva EB / Camuflagem Tática - Mais escuro e austero) */
+  --color-emerald-50: #f0f4ed;
+  --color-emerald-100: #dce5d4;
+  --color-emerald-200: #b9cbb0;
+  --color-emerald-300: #8aa979;
+  --color-emerald-400: #5c7d42; /* Verde Militar EB autêntico, mais escuro e fechado */
+  --color-emerald-500: #466330; /* Verde Oliva Militar Tático */
+  --color-emerald-600: #364d25; /* Verde Selva / Noturno EB */
+  --color-emerald-700: #293a1c;
+  --color-emerald-800: #1d2a13;
+  --color-emerald-900: #131c0d;
+  --color-emerald-950: #0a0f06;
+
+  /* Azul Tático Escurecido (Navy Profundo e Sóbrio) */
+  --color-blue-50: #ebf1f8;
+  --color-blue-100: #d2e0f0;
+  --color-blue-200: #a5c0e1;
+  --color-blue-300: #6d96cb;
+  --color-blue-400: #345e94; /* Azul mais escuro e sóbrio */
+  --color-blue-500: #1f4473; /* Azul Marinho Operacional Escuro */
+  --color-blue-600: #163459;
+  --color-blue-700: #0f243f;
+  --color-blue-800: #0a182b;
+  --color-blue-900: #06101c;
+  --color-blue-950: #03080e;
+}
+
+@layer base {
+  html {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Plus Jakarta Sans', system-ui, sans-serif;
+    scroll-behavior: smooth;
+    -webkit-tap-highlight-color: transparent;
+    text-size-adjust: 100%;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    background-color: #03060a;
+    color: #f1f5f9;
+    overflow-x: hidden;
+  }
+
+  code, kbd, samp, pre {
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  }
+}
+
+/* Tactical Liquid Glass Utilities - Escurecidas em tom tático militar */
+.liquid-glass {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.dark .liquid-glass,
+:root .liquid-glass-dark {
+  background: rgba(6, 10, 14, 0.92);
+  backdrop-filter: blur(28px) saturate(190%);
+  -webkit-backdrop-filter: blur(28px) saturate(190%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.8), 
+              0 1px 1px 0 rgba(255, 255, 255, 0.07) inset;
+}
+
+.liquid-glass-dock {
+  background: rgba(4, 7, 10, 0.96);
+  backdrop-filter: blur(32px) saturate(210%);
+  -webkit-backdrop-filter: blur(32px) saturate(210%);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 -10px 35px -5px rgba(0, 0, 0, 0.7);
+}
+
+.liquid-glass-card {
+  background: rgba(6, 10, 15, 0.88);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  box-shadow: 0 12px 32px 0 rgba(0, 0, 0, 0.5),
+              0 1px 0 0 rgba(255, 255, 255, 0.05) inset;
+}
+
+.liquid-glass-card:hover {
+  border-color: rgba(92, 125, 66, 0.45);
+  box-shadow: 0 16px 40px -8px rgba(0, 0, 0, 0.7),
+              0 1px 0 0 rgba(92, 125, 66, 0.3) inset;
+}
+
+.liquid-glass-pill {
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(92, 125, 66, 0.35);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(92, 125, 66, 0.6);
+}

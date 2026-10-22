@@ -1,0 +1,33 @@
+{
+  "id": "/",
+  "name": "SimulaGaivota - CFST Comunicações",
+  "short_name": "SimulaGaivota",
+  "description": "Plataforma de estudos militares para o Curso de Formação de Sargentos Temporários (CFST - Arma de Comunicações) com avaliação oficial por gaivotas.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#090d16",
+  "theme_color": "#090d16",
+  "categories": ["education", "productivity"],
+  "icons": [
+    {
+      "src": "/pwa-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

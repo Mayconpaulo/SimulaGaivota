@@ -1,0 +1,6 @@
+{
+  "name": "SimulaGaivota - Simulados Militares CFC / CFS / CAS",
+  "description": "Plataforma de estudos militares para Cursos de Formação e Promoção do Exército Brasileiro com sistema de avaliação por gaivotas, questões objetivas e discursivas e gerador por IA.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
