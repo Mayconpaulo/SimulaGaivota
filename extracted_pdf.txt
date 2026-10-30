@@ -1,0 +1,589 @@
+13º PELOTÃO DE COMUNICAÇÕES
+
+-- 1 of 77 --
+
+13º PELOTÃO DE COMUNICAÇÕES
+
+-- 2 of 77 --
+
+TAREFA
+“Processar uma mensagem.”
+
+-- 3 of 77 --
+
+I. INTRODUÇÃO
+> Definição e conceitos.
+II. DESENVOLVIMENTO
+(a) Autenticação;
+(b) Normas para autenticação;
+(c) Sistema um alfabeto
+(d) Sistema dois alfabeto
+(e) Sistema alfabeto retangular;
+(f) Sistema de autenticação Nr 3
+(g) Sistema de autenticação Nr 4
+(h) Sistema de autenticação Nr 5
+III. CONCLUSÃO
+
+-- 4 of 77 --
+
+CONCEITO
+AUTENTICAÇÃO – Medida de segurança destinada a proteger os sistemas de
+comunicações contra mensagens falsas e outras transmissões realizadas pelo inimigo, cuja
+a intenção seja induzir-nos a ações erradas dar margem a confusão, dano, ou permitir a
+descoberta de informações importantes
+AUTENTICAÇÃO
+
+-- 5 of 77 --
+
+CONCEITOS BÁSICOS
+• AUTENTICAÇÃO DE POSTO - É a medida de segurança destinada a determinar se o posto
+transmissor e o receptor pertencem às forças amigas.
+• AUTENTICAÇÃO DE MENSAGEM - É a medida de segurança destinada a estabelecer a
+identidade das mensagens.
+• AUTENTICAÇÃO DE REDE - É um tipo de identificação de posto destinada a estabelecer,
+de fato, que todos os postos de uma rede pertencem às forças amigas.
+AUTENTICAÇÃO
+
+-- 6 of 77 --
+
+CONCEITOS BÁSICOS
+• AUTENTICADOR - É um par de letras ou algarismos a que se chega seguindo uma norma
+preestabelecida.
+• ELEMENTO-TESTE - É a letra ou algarismo usado como um dos elementos na
+determinação de um autenticador.
+• GRUPO TESTE DE REDE - É um conjunto predeterminado de letras, do qual se escolhem
+os elementos-teste para a autenticação quando a rede for aberta.
+AUTENTICAÇÃO
+
+-- 7 of 77 --
+
+QUANDO AUTENTICAR
+• Abertura ou fechamento de um sistema rádio;
+• Estação rádio entra na rede;
+• Mensagens em claro ou extremamente importante;
+• Houver mudança de frequência;
+• Mensagens duvidosas;
+• Suspeita de transmissões clandestinas
+AUTENTICAÇÃO
+
+-- 8 of 77 --
+
+FUNDAMENTOS
+• Os métodos de seleção dos elementos-teste devem ser determinados com antecedência
+e especificados na I E Com
+NORMAS PARA AUTENTICAÇÃO
+
+-- 9 of 77 --
+
+FUNDAMENTOS
+NORMAS PARA AUTENTICAÇÃO
+Elemento-teste
+
+-- 10 of 77 --
+
+ELEMENTO TESTE
+NORMAS PARA AUTENTICAÇÃO
+ELEMENTO – TESTE:
+1º  O
+2º  A
+
+-- 11 of 77 --
+
+ELEMENTO TESTE
+NORMAS PARA AUTENTICAÇÃO
+ELEMENTO – TESTE:
+1º  A
+2º  P
+
+-- 12 of 77 --
+
+CONCEITO
+• Os três sistemas de autenticação abaixo descritos somente são autorizados, no exército,
+para serem utilizados, como sistemas normais, por unidades dos escalões Batalhão e
+inferiores
+AUTENTICAÇÃO PARA PEQUENOS ESCALÕES
+
+-- 13 of 77 --
+
+CONCEITO
+O sistema consiste em um alfabeto desordenado, cujas letras são numeradas de acordo
+com uma sequência numérica obtida da palavra-chave.
+SISTEMA UM ALFABETO
+
+-- 14 of 77 --
+
+PROCEDIMENTO
+Processo de autenticação:
+1) Procura-se no alfabeto o valor numérico dos elementos-teste;
+2) Os valores são somados;
+3) Conta-se o nº de letras a partir do 2º elemento-teste;
+4) A letra correspondente ao valor da soma será o autenticador.
+SISTEMA UM ALFABETO
+
+-- 15 of 77 --
+
+PROCEDIMENTO
+Processo de autenticação:
+1) Procura-se no alfabeto o valor numérico dos elementos-teste;
+SISTEMA UM ALFABETO
+
+-- 16 of 77 --
+
+PROCEDIMENTO
+Processo de autenticação:
+1) Procura-se no alfabeto o valor numérico dos elementos-teste;
+SISTEMA UM ALFABETO
+
+-- 17 of 77 --
+
+PROCEDIMENTO
+Processo de autenticação:
+1) Procura-se no alfabeto o valor numérico dos elementos-teste;
+SISTEMA UM ALFABETO
+
+-- 18 of 77 --
+
+PROCEDIMENTO
+Processo de autenticação:
+2) Os valores são somados;
+SISTEMA UM ALFABETO
+
+-- 19 of 77 --
+
+PROCEDIMENTO
+Processo de autenticação:
+3) Conta-se o nº de letras a partir do 2º elemento-teste;
+SISTEMA UM ALFABETO
+
+-- 20 of 77 --
+
+PROCEDIMENTO
+Processo de autenticação:
+4) A letra correspondente ao valor da soma será o autenticador.
+SISTEMA UM ALFABETO
+
+-- 21 of 77 --
+
+CONCEITO
+O sistema de autenticação de dois alfabeto consiste em um alfabeto completo,
+desordenado segundo uma palavra-chave, e outro alfabeto, incompleto, que é obtido do
+primeiro tomando-se as 18 últimas palavras e invertendo a sua ordem.
+O 1º Alfabeto tem suas letras numeradas em sequência de 1 a 9,tantas vezes quanta
+necessário e o 2º alfabeto tem suas letras numeradas na sequência de 1 a 18.
+SISTEMA DE DOIS ALFABETOS
+
+-- 22 of 77 --
+
+CONCEITO
+O sistema de autenticação de dois alfabeto consiste em um alfabeto completo,
+desordenado segundo uma palavra-chave, e outro alfabeto, incompleto, que é obtido do
+primeiro tomando-se as 18 últimas palavras e invertendo a sua ordem.
+O 1º Alfabeto tem suas letras numeradas em sequência de 1 a 9,tantas vezes quanta
+necessário e o 2º alfabeto tem suas letras numeradas na sequência de 1 a 18.
+SISTEMA DE DOIS ALFABETOS
+
+-- 23 of 77 --
+
+PROCEDIMENTO
+Processo de autenticação
+1) Pega-se 02 elementos testes predeterminados na IECom Elt
+2) Localiza-se estas letras no 1º alfabeto;
+3) Soma-se o valor numérico de cada uma;
+4) Procura-se o valor correspondente à soma no 2º alfabeto;
+5) Esta letra será o autenticador
+SISTEMA DE DOIS ALFABETOS
+
+-- 24 of 77 --
+
+PROCEDIMENTO
+Processo de autenticação
+1) Pega-se 02 elementos testes predeterminados na IECom Elt e Localiza-se estas letras no
+1º alfabeto;
+SISTEMA DE DOIS ALFABETOS
+
+-- 25 of 77 --
+
+PROCEDIMENTO
+Processo de autenticação
+1) Pega-se 02 elementos testes predeterminados na IECom Elt e Localiza-se estas letras no
+1º alfabeto;
+SISTEMA DE DOIS ALFABETOS
+
+-- 26 of 77 --
+
+PROCEDIMENTO
+Processo de autenticação
+2) Localiza-se estas letras no 1º alfabeto;
+SISTEMA DE DOIS ALFABETOS
+
+-- 27 of 77 --
+
+PROCEDIMENTO
+Processo de autenticação
+3) Soma-se o valor numérico de cada uma
+SISTEMA DE DOIS ALFABETOS
+
+-- 28 of 77 --
+
+PROCEDIMENTO
+Processo de autenticação
+4) Procura-se o valor correspondente à soma no 2º alfabeto;
+SISTEMA DE DOIS ALFABETOS
+
+-- 29 of 77 --
+
+PROCEDIMENTO
+Processo de autenticação
+5) Esta letra será o autenticador
+SISTEMA DE DOIS ALFABETOS
+
+-- 30 of 77 --
+
+CONCEITO
+Esse sistema consiste em um retângulo dividido em 25 casas, sendo colocada, em cada
+casa, uma letra de um alfabeto desordenado segundo uma palavra-chave, juntamente com
+um valor numérico.
+Como o retângulo possui 23 casas e o alfabeto tem 26 letras, na primeira casa são
+colocados as duas primeiras letras do alfabeto desordenado.
+SISTEMA ALFABETO RETANGULAR
+
+-- 31 of 77 --
+
+PROCEDIMENTO
+Processo de autenticação:
+1) Os dois elementos testes são procurados no retângulo;
+2) Quando as duas letras que constituírem os Elementos-teste estiverem nas
+extremidades da diagonal de um retângulo imaginário, demarcado por estas letras, o
+autenticador será um número de dois algarismos que é igual à soma dos valores das
+letras que estão nas extremidades da outra diagonal.
+SISTEMA ALFABETO RETANGULAR
+
+-- 32 of 77 --
+
+PROCEDIMENTO
+Processo de autenticação:
+SISTEMA ALFABETO RETANGULAR
+
+-- 33 of 77 --
+
+PROCEDIMENTO
+Processo de autenticação:
+SISTEMA ALFABETO RETANGULAR
+
+-- 34 of 77 --
+
+PROCEDIMENTO
+Processo de autenticação:
+SISTEMA ALFABETO RETANGULAR
+ELEMENTO – TESTE:
+1º  S
+2º  O
+
+-- 35 of 77 --
+
+PROCEDIMENTO
+Processo de autenticação:
+SISTEMA ALFABETO RETANGULAR
+
+-- 36 of 77 --
+
+PROCEDIMENTO
+Processo de autenticação:
+SISTEMA ALFABETO RETANGULAR
+
+-- 37 of 77 --
+
+PROCEDIMENTO
+Processo de autenticação:
+SISTEMA ALFABETO RETANGULAR
+
+-- 38 of 77 --
+
+PROCEDIMENTO
+Processo de autenticação:
+SISTEMA ALFABETO RETANGULAR
+
+-- 39 of 77 --
+
+PROCEDIMENTO
+Processo de autenticação:
+SISTEMA ALFABETO RETANGULAR
+
+-- 40 of 77 --
+
+PROCEDIMENTO
+Processo de autenticação:
+SISTEMA ALFABETO RETANGULAR
+
+-- 41 of 77 --
+
+PROCEDIMENTO
+OBSERVAÇÃO: O sistema de alfabeto retangular é o único método de autenticação que o
+resultado final será um número.
+Os demais métodos sempre serão um par de letras como resultado(sistema um alfabeto e
+dois alfabeto
+SISTEMA ALFABETO RETANGULAR
+
+-- 42 of 77 --
+
+PROCEDIMENTO
+SISTEMA ALFABETO RETANGULAR
+
+-- 43 of 77 --
+
+PROCEDIMENTO
+SISTEMA ALFABETO RETANGULAR
+
+-- 44 of 77 --
+
+CONCEITO
+Os três sistemas de autenticação abaixo descritos somente são autorizados, no Exército,
+para serem utilizados como sistemas normais por unidades dos escalões batalhão e
+superiores.
+• Sistema de autenticação Nr 3;
+• Sistema de autenticação Nr 4;
+• Sistema de autenticação Nr 5
+SISTEMAS DE AUTENTICAÇÃO PARA OS GRANDES ESCALÕES
+
+-- 45 of 77 --
+
+CONCEITO
+Descrição da tabela de autenticação:
+a) A tabela de autenticação consiste em um quadro alfabético com designadores de
+fileiras, uma coluna das letras-chave e uma coluna de autenticador;
+b) O quadro alfabético é um quadrado contendo 26 letras em cada lado;
+c) Cada fileira (linha horizontal) da tabela contém um alfabeto, desordenado ao acaso e
+diferentemente.
+SISTEMA DE AUTENTICAÇÃO NR 3
+
+-- 46 of 77 --
+
+CONCEITO
+Descrição da tabela de autenticação:
+d) Os indicadores de fileira são colocados à esquerda do quadro alfabético e consistem no
+alfabeto normal escrito de cima para baixo;
+e) As dez primeiras letras dos indicadores de fileira formam uma fileira de substituição
+para os algarismos de 1 a 0 que aparecerão na ordem normal, correspondendo às letras
+de A a J;
+f) A coluna das letras-chave é colocada à direita do quadro alfabético. Consiste em um
+alfabeto normal escrito de cima para baixo. A coluna de autenticador é colocada logo à
+direita da coluna das letras-chave e consiste em um alfabeto desordenado ao acaso
+SISTEMA DE AUTENTICAÇÃO NR 3
+
+-- 47 of 77 --
+
+CONCEITO
+SISTEMA DE AUTENTICAÇÃO NR 3
+
+-- 48 of 77 --
+
+MÉTODO DE OPERAÇÃO
+Método da operação: usar dois elementos teste para obtenção do autenticador.
+ Suponhamos que os elementos teste sejam H e L:
+a) Localizar o primeiro elemento teste (letra H) na coluna dos designadores de fileira;
+b) Seguir a fileira designada pelo primeiro elemento teste (letra H) até encontrar o
+segundo elemento teste;
+c) Identificar a letra chave, que será aquela imediatamente à direita do segundo elemento
+teste (letra L), ou seja, a letra A. No caso de ser o segundo elemento teste o último da
+fileira, a letra chave será a primeira desta mesma fileira;
+d) Localizar a letra chave A na coluna das letras chaves à direita do quadrado alfabético. A
+letra da coluna do autenticador imediatamente à direita da letra chave A é o
+autenticador (letra O), que será anunciado OO.
+SISTEMA DE AUTENTICAÇÃO NR 3
+
+-- 49 of 77 --
+
+MÉTODO DE OPERAÇÃO
+SISTEMA DE AUTENTICAÇÃO NR 3
+
+-- 50 of 77 --
+
+MÉTODO DE OPERAÇÃO
+SISTEMA DE AUTENTICAÇÃO NR 3
+
+-- 51 of 77 --
+
+SISTEMA DE AUTENTICAÇÃO NR 3
+
+-- 52 of 77 --
+
+SISTEMA DE AUTENTICAÇÃO NR 3
+
+-- 53 of 77 --
+
+SISTEMA DE AUTENTICAÇÃO NR 3
+
+-- 54 of 77 --
+
+CONCEITO
+Descrição da tabela de autenticação:
+a) A tabela de autenticação consiste em um quadro alfabético, com designadores de
+coluna, uma coluna de tempo e uma coluna de letras chave;
+b) O quadro alfabético é um quadrado tendo 26 letras em cada lado;
+c) Cada coluna (linha vertical) do quadro contém um alfabeto desordenado ao acaso e
+diferentemente.
+d) Os designadores de coluna estão escritos acima do quadro alfabético e consistem em
+um alfabeto normal;
+SISTEMA DE AUTENTICAÇÃO NR 4
+
+-- 55 of 77 --
+
+CONCEITO
+Descrição da tabela de autenticação:
+e) As dez primeiras letras dos designadores de coluna formarão uma tabela de
+substituição para os algarismos de 1 a 0, os quais aparecem na ordem normal e acima
+das letras de A a J;
+f) A coluna de tempo é colocada à esquerda do quadro alfabético;
+g) As 24 horas serão colocadas na sequência normal, começando com a primeira fileira às
+0000 horas. De tal sorte, cada uma das 24 primeiras fileiras de letras do quadro
+alfabético terá um designador de tempo;
+h) A coluna das letras chave aparece à direita da tabela alfabética e consiste de um
+alfabeto ao acaso;
+i) Cada fileira de letras da tabela alfabética tem uma letra chave designadora
+SISTEMA DE AUTENTICAÇÃO NR 4
+
+-- 56 of 77 --
+
+SISTEMA DE AUTENTICAÇÃO NR 4
+
+-- 57 of 77 --
+
+CONCEITO
+ Método de operação: para se obter um autenticador são usados dois elementos teste e
+um elemento tempo. Supor que os elementos teste sejam L e N às 20:15 h. Uma vez que
+20:15 h está entre 20:00 h e 20:59 h, o elemento tempo será os das 20:00 h. A sequência
+para autenticação é a seguinte:
+1. Localizar o primeiro elemento teste (Letra L) dentre os designadores de coluna acima do
+quadro alfabético;
+2. Procurar na coluna designada pelo primeiro elemento teste (letra L) até encontrar o
+segundo elemento teste (letra N);
+3. Ver qual a letra que, na coluna das letras chave, corresponde à fileira que contém o
+segundo elemento teste (letra N). A letra que se acha correspondendo a essa fileira é
+M.
+SISTEMA DE AUTENTICAÇÃO NR 4
+
+-- 58 of 77 --
+
+CONCEITO
+ Método de operação: para se obter um autenticador são usados dois elementos teste e
+um elemento tempo. Supor que os elementos teste sejam L e N às 20:15 h. Uma vez que
+20:15 h está entre 20:00 h e 20:59 h, o elemento tempo será os das 20:00 h. A sequência
+para autenticação é a seguinte:
+4. Localizar a letra M entre os designadores de coluna acima do quadro alfabético;
+5. Procurar nesta coluna a letra que se encontra na fileira correspondente ao elemento
+tempo 20:00 h. A letra que se encontra na interseção da coluna do M com a fileira do
+elemento tempo 20:00 h é o autenticador (letra R).
+SISTEMA DE AUTENTICAÇÃO NR 4
+
+-- 59 of 77 --
+
+SISTEMA DE AUTENTICAÇÃO NR 4
+
+-- 60 of 77 --
+
+SISTEMA DE AUTENTICAÇÃO NR 4
+
+-- 61 of 77 --
+
+SISTEMA DE AUTENTICAÇÃO NR 4
+
+-- 62 of 77 --
+
+SISTEMA DE AUTENTICAÇÃO NR 4
+
+-- 63 of 77 --
+
+SISTEMA DE AUTENTICAÇÃO NR 4
+
+-- 64 of 77 --
+
+SISTEMA DE AUTENTICAÇÃO NR 4
+
+-- 65 of 77 --
+
+CONCEITO
+Descrição da tabela de autenticação:
+a) A tabela de autenticação consiste em um quadro alfabético com designadores de fileira
+e uma fileira de tempo;
+b) O quadro alfabético é um quadrado, tendo 26 letras em cada lado;
+c) Cada fileira da tabela contém um alfabeto completo desordenado ao acaso;
+d) Os designadores de fileira são colocados à esquerda do quadro alfabético e consistem
+de um alfabeto escrito de cima para baixo.
+SISTEMA DE AUTENTICAÇÃO NR 5
+
+-- 66 of 77 --
+
+CONCEITO
+Descrição da tabela de autenticação:
+e) As dez primeiras letras dos designadores de fileira constituem uma tabela de
+substituição, para os algarismos de 1 a 0 e que aparecem correspondendo às letras de
+A a J.
+f) A fileira de tempo é colocada acima da tabela alfabética.
+g) As 24 horas são colocadas na sequencia normal, começando a primeira coluna com 00.
+h) Lendo-se da esquerda para direita, cada uma das 24 primeiras colunas de letras da
+tabela terá um designador de tempo.
+SISTEMA DE AUTENTICAÇÃO NR 5
+
+-- 67 of 77 --
+
+SISTEMA DE AUTENTICAÇÃO NR 5
+
+-- 68 of 77 --
+
+MÉTODO DE OPERAÇÃO
+ Método de operação: para obtenção do autenticador são necessárias dois elementos
+teste e um elemento tempo. Supor que N e M sejam os elementos teste e que a hora
+seja 10:45 h; uma vez que 10:45 h está entre 10:00 h e 10:59 h, o elemento tempo é o
+das 10:00 h. Veja a seguir:
+1. Localizar o primeiro elemento teste (letra N) entre os designadores de fileira à esquerda
+da tabela;
+2. Procurar na fileira designada pelo N o segundo elemento teste (letra M);
+3. A letra à direita do segundo elemento teste (letra M) é a letra chave (letra I). Quando o
+segundo elemento teste for a última letra da fileira, a letra chave será a primeira letra
+desta mesma fileira;
+SISTEMA DE AUTENTICAÇÃO NR 5
+
+-- 69 of 77 --
+
+MÉTODO DE OPERAÇÃO
+ Método de operação: para obtenção do autenticador são necessárias dois elementos
+teste e um elemento tempo. Supor que N e M sejam os elementos teste e que a hora
+seja 10:45 h; uma vez que 10:45 h está entre 10:00 h e 10:59 h, o elemento tempo é o
+das 10:00 h. Veja a seguir:
+4. Localizar a letra chave (letra I) entre os designadores de fileira à esquerda da tabela;
+5. Procurar nesta fileira a letra que se encontra na coluna correspondente ao elemento
+tempo (10 horas). A letra que se encontra na interseção da fileira do I com o da coluna
+do elemento tempo é o autenticador (letra J).
+SISTEMA DE AUTENTICAÇÃO NR 5
+
+-- 70 of 77 --
+
+SISTEMA DE AUTENTICAÇÃO NR 5
+
+-- 71 of 77 --
+
+SISTEMA DE AUTENTICAÇÃO NR 5
+
+-- 72 of 77 --
+
+SISTEMA DE AUTENTICAÇÃO NR 5
+
+-- 73 of 77 --
+
+SISTEMA DE AUTENTICAÇÃO NR 5
+
+-- 74 of 77 --
+
+SISTEMA DE AUTENTICAÇÃO NR 5
+
+-- 75 of 77 --
+
+SISTEMA DE AUTENTICAÇÃO NR 5
+
+-- 76 of 77 --
+
+10/10
+CONCLUSÃO
+
+-- 77 of 77 --
+

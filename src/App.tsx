@@ -12,6 +12,7 @@ import { ExamViewer } from './components/ExamViewer';
 import { FlashcardViewer } from './components/FlashcardViewer';
 import { MaterialUploadHub } from './components/MaterialUploadHub';
 import { PerformanceDashboard } from './components/PerformanceDashboard';
+import { CryptographyModule } from './components/CryptographyModule';
 import { StudyConfigModal } from './components/StudyConfigModal';
 import { PWAInstallModal } from './components/PWAInstallModal';
 import { OfflineIndicator } from './components/OfflineIndicator';
@@ -27,41 +28,51 @@ export default function App() {
       localStorage.removeItem('simulagaivota_custom_exams');
       localStorage.removeItem('simulagaivota_user_exams');
 
-      // Guarantee one-time reset for all users opening this updated version so everyone starts 100% clean
-      const resetDone = localStorage.getItem('simulagaivota_zeroed_v4');
-      if (!resetDone) {
-        localStorage.removeItem('simulagaivota_notebooks_v4');
-        localStorage.removeItem('simulagaivota_attempts');
-        localStorage.removeItem('simulagaivota_answers');
-        localStorage.setItem('simulagaivota_zeroed_v4', 'true');
-        return [];
-      }
-
+      // Load saved custom user notebooks
       const saved = localStorage.getItem('simulagaivota_notebooks_v4');
+      const userCustomExams: Exam[] = [];
       if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) {
-          return parsed
-            .filter((e: Exam) => e.isCustom)
-            .map((exam: Exam) => ({
-              ...exam,
-              questions: (exam.questions || []).map((q: Question, idx: number) =>
-                normalizeQuestion(q, idx, exam.id)
-              ),
-            }));
+        try {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed)) {
+            parsed.forEach((e: Exam) => {
+              if (e && e.id && !INITIAL_EXAMS.some((init) => init.id === e.id)) {
+                userCustomExams.push({
+                  ...e,
+                  questions: (e.questions || []).map((q: Question, idx: number) =>
+                    normalizeQuestion(q, idx, e.id)
+                  ),
+                });
+              }
+            });
+          }
+        } catch (err) {
+          console.warn('Erro ao restaurar cadernos customizados:', err);
         }
       }
+
+      // Normalize the official uploaded subjects
+      const normalizedInitial = INITIAL_EXAMS.map((exam) => ({
+        ...exam,
+        questions: (exam.questions || []).map((q: Question, idx: number) =>
+          normalizeQuestion(q, idx, exam.id)
+        ),
+      }));
+
+      return [...normalizedInitial, ...userCustomExams];
     } catch (e) {
       console.warn('Erro ao inicializar cadernos:', e);
+      return INITIAL_EXAMS;
     }
-    return [];
   });
 
-  const [activeTab, setActiveTab] = useState<'simulados' | 'flashcards' | 'materiais' | 'desempenho'>(() => {
-    return 'materiais';
+  const [activeTab, setActiveTab] = useState<'simulados' | 'flashcards' | 'criptografia' | 'materiais' | 'desempenho'>(() => {
+    return 'simulados';
   });
 
-  const [activeExamId, setActiveExamId] = useState<string>('');
+  const [activeExamId, setActiveExamId] = useState<string>(() => {
+    return INITIAL_EXAMS[0]?.id || '';
+  });
 
   const [attempts, setAttempts] = useState<ExamAttempt[]>(() => {
     try {
@@ -178,6 +189,21 @@ export default function App() {
     setActiveTab('desempenho');
   };
 
+  const handleAwardCryptoGaivota = (count: number) => {
+    const newAttempt: ExamAttempt = {
+      id: `crypto-${Date.now()}`,
+      examId: 'criptografia-q402',
+      mode: 'flashcards',
+      startedAt: new Date(Date.now() - 60 * 1000).toISOString(),
+      completedAt: new Date().toISOString(),
+      answers: {},
+      totalGaivotasEarned: count,
+      totalGaivotasPossible: count,
+      finalScorePercent: 100,
+    };
+    setAttempts((prev) => [newAttempt, ...prev]);
+  };
+
   // Handler to rename a study notebook / caderno
   const handleRenameExam = (examId: string, newTitle: string, newSubject?: string) => {
     setExams((prev) =>
@@ -193,6 +219,22 @@ export default function App() {
     );
   };
 
+  // Handler to delete a single study notebook / caderno
+  const handleDeleteExam = (examId: string) => {
+    setExams((prev) => {
+      const next = prev.filter((e) => e.id !== examId);
+      if (activeExamId === examId) {
+        setActiveExamId(next[0]?.id || '');
+      }
+      return next;
+    });
+    setSavedAnswersByExam((prev) => {
+      const copy = { ...prev };
+      delete copy[examId];
+      return copy;
+    });
+  };
+
   // Handler to clear/reset study notebooks (cadernos)
   const handleResetCadernos = () => {
     if (window.confirm('Deseja realmente zerar todos os cadernos de estudo e reiniciar do zero?')) {
@@ -202,8 +244,8 @@ export default function App() {
       localStorage.removeItem('simulagaivota_notebooks_v4');
       localStorage.removeItem('simulagaivota_attempts');
       localStorage.removeItem('simulagaivota_answers');
-      setExams([]);
-      setActiveExamId('');
+      setExams(INITIAL_EXAMS);
+      setActiveExamId(INITIAL_EXAMS[0]?.id || '');
       setAttempts([]);
       setSavedAnswersByExam({});
       setIsStudySetupOpen(false);
@@ -213,31 +255,190 @@ export default function App() {
 
   // Handler for study sessions configured by user
   const handleStartStudySession = async (config: StudySessionConfig) => {
-    // If user chose a specific exam from cloud materials
-    if (config.materialSource === 'nuvem' && config.selectedCloudExamId) {
-      const baseCloudExam = exams.find((e) => e.id === config.selectedCloudExamId) || activeExam;
+    // If user chose nuvem (either single or multiple subjects selected)
+    if (config.materialSource === 'nuvem') {
+      const selectedIds = config.selectedCloudExamIds && config.selectedCloudExamIds.length > 0
+        ? config.selectedCloudExamIds
+        : config.selectedCloudExamId
+        ? [config.selectedCloudExamId]
+        : [];
 
-      // If user typed a custom question count (e.g., 50, 100), generate that exact number
-      if (config.questionCount && config.questionCount > baseCloudExam.questions.length) {
-        const generatedQuestions = generateQuestionsForCFST(
-          config.questionCount,
+      const targetExams = exams.filter((e) => selectedIds.includes(e.id));
+      const baseCloudExam = targetExams[0] || exams[0] || activeExam;
+
+      if (targetExams.length > 1) {
+        // Multi-subject cloud exam
+        let poolOfQuestions: Question[] = [];
+        targetExams.forEach((ex) => {
+          poolOfQuestions.push(...ex.questions);
+        });
+
+        // Ensure questions are diverse and generate extra if user requested a large question count
+        if (config.questionCount && config.questionCount > poolOfQuestions.length) {
+          const extraCount = config.questionCount - poolOfQuestions.length;
+          const generatedExtra = generateQuestionsForCFST(
+            extraCount,
+            config.difficulty,
+            targetExams.map((e) => e.title).join(' / '),
+            config.avoidRepeatedQuestions !== false ? seenQuestionPrompts : [],
+            config.enableSpacedRepetition ? missedQuestionsList : []
+          );
+          poolOfQuestions = [...poolOfQuestions, ...generatedExtra];
+        }
+
+        const shuffled = [...poolOfQuestions].sort(() => 0.5 - Math.random());
+        const finalQuestions = shuffled.slice(0, config.questionCount || poolOfQuestions.length);
+
+        const multiExam: Exam = {
+          id: `cloud-multi-${Date.now()}`,
+          title: `Simulado Nuvem (${targetExams.length} Matérias · ${finalQuestions.length} Questões)`,
+          course: 'CFST',
+          subject: targetExams.map((e) => e.title).slice(0, 3).join(' · '),
+          institution: 'CFST 26/2',
+          instructions: `Simulado com questões mescladas das matérias da nuvem: ${targetExams.map((e) => e.title).join(', ')}.`,
+          questions: finalQuestions.map((q, idx) =>
+            normalizeQuestion(q, idx, `cloud-multi-${Date.now()}`)
+          ),
+          totalTimeMinutes: finalQuestions.length * 12,
+          isCustom: true,
+          createdAt: new Date().toISOString(),
+        };
+
+        setExams((prev) => [multiExam, ...prev]);
+        setActiveExamId(multiExam.id);
+        if (config.mode === 'simulado') setActiveTab('simulados');
+        else if (config.mode === 'flashcards') setActiveTab('flashcards');
+        return;
+      } else if (baseCloudExam) {
+        // Single cloud exam
+        if (config.questionCount && config.questionCount > baseCloudExam.questions.length) {
+          const generatedQuestions = generateQuestionsForCFST(
+            config.questionCount,
+            config.difficulty,
+            baseCloudExam.title,
+            config.avoidRepeatedQuestions !== false ? seenQuestionPrompts : [],
+            config.enableSpacedRepetition ? missedQuestionsList : []
+          );
+          const dynId = `cloud-dynamic-${Date.now()}`;
+          const dynamicExam: Exam = {
+            ...baseCloudExam,
+            id: dynId,
+            title: `${baseCloudExam.title} (${config.questionCount} Questões)`,
+            questions: generatedQuestions.map((q, idx) =>
+              normalizeQuestion(q, idx, dynId)
+            ),
+            totalTimeMinutes: config.questionCount * 12,
+          };
+          setExams((prev) => [dynamicExam, ...prev]);
+          setActiveExamId(dynamicExam.id);
+        } else {
+          setActiveExamId(baseCloudExam.id);
+        }
+      }
+    } else if (config.materialSource === 'misto') {
+      // Misto: Mix questions from selected cloud exams with new uploaded materials
+      const selectedIds = config.selectedCloudExamIds && config.selectedCloudExamIds.length > 0
+        ? config.selectedCloudExamIds
+        : config.selectedCloudExamId
+        ? [config.selectedCloudExamId]
+        : [];
+
+      const cloudSelectedExams = exams.filter((e) => selectedIds.includes(e.id));
+      let cloudQuestionsPool: Question[] = [];
+      cloudSelectedExams.forEach((ex) => cloudQuestionsPool.push(...ex.questions));
+
+      let uploadQuestions: Question[] = [];
+      if ((config.uploadedDocs && config.uploadedDocs.length > 0) || config.uploadedText) {
+        setIsGeneratingAIExam(true);
+        try {
+          const sanitizedUploadDocs = (config.uploadedDocs || []).map((file) => {
+            if (file.text && file.text.length > 20) {
+              return {
+                name: file.name,
+                mimeType: file.mimeType,
+                text: file.text,
+                size: file.size,
+              };
+            }
+            return file;
+          });
+
+          const desiredFromUpload = Math.max(2, Math.round((config.questionCount || 10) / 2));
+          const res = await fetch('/api/generate-exam', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              courseType: 'CFST',
+              subject: config.uploadedDocs && config.uploadedDocs.length > 0
+                ? config.uploadedDocs.map((d) => d.name).slice(0, 2).join(' & ')
+                : 'Novo Material',
+              questionCount: desiredFromUpload,
+              difficulty: config.difficulty,
+              files: sanitizedUploadDocs,
+              materialText: config.uploadedText || '',
+              excludePrompts: config.avoidRepeatedQuestions !== false ? seenQuestionPrompts : [],
+              missedQuestions: config.enableSpacedRepetition
+                ? missedQuestionsList.map((q) => ({ id: q.id, prompt: q.prompt, subject: q.subject }))
+                : [],
+              avoidRepeatedQuestions: config.avoidRepeatedQuestions !== false,
+              enableSpacedRepetition: Boolean(config.enableSpacedRepetition),
+            }),
+          });
+
+          if (res.ok) {
+            const examData = await res.json();
+            if (examData.questions && Array.isArray(examData.questions)) {
+              uploadQuestions = examData.questions;
+            }
+          }
+        } catch (e) {
+          console.warn('Erro ao processar novos arquivos no modo misto:', e);
+        } finally {
+          setIsGeneratingAIExam(false);
+        }
+      }
+
+      // Mix and balance questions from both sources
+      let mixedPool: Question[] = [...cloudQuestionsPool, ...uploadQuestions];
+
+      // If we need more questions to meet user questionCount, generate extra
+      if (config.questionCount && mixedPool.length < config.questionCount) {
+        const extraCount = config.questionCount - mixedPool.length;
+        const extraGenerated = generateQuestionsForCFST(
+          extraCount,
           config.difficulty,
-          baseCloudExam.title,
+          cloudSelectedExams.map((e) => e.title).join(' / ') || 'CFST 26/2 Misto',
           config.avoidRepeatedQuestions !== false ? seenQuestionPrompts : [],
           config.enableSpacedRepetition ? missedQuestionsList : []
         );
-        const dynamicExam: Exam = {
-          ...baseCloudExam,
-          id: `cloud-dynamic-${Date.now()}`,
-          title: `${baseCloudExam.title} (${config.questionCount} Questões)`,
-          questions: generatedQuestions,
-          totalTimeMinutes: config.questionCount * 12,
-        };
-        setExams((prev) => [dynamicExam, ...prev]);
-        setActiveExamId(dynamicExam.id);
-      } else {
-        setActiveExamId(config.selectedCloudExamId);
+        mixedPool = [...mixedPool, ...extraGenerated];
       }
+
+      const shuffledMixed = [...mixedPool].sort(() => 0.5 - Math.random());
+      const finalMixedQuestions = shuffledMixed.slice(0, config.questionCount || mixedPool.length);
+
+      const mixedTitles = cloudSelectedExams.map((e) => e.title);
+      const mixedId = `exam-misto-${Date.now()}`;
+      const mixedExam: Exam = {
+        id: mixedId,
+        title: `Simulado Misto (${cloudSelectedExams.length} Matérias Nuvem + ${uploadQuestions.length > 0 ? 'Novos Arquivos' : 'Arquivos'})`,
+        course: 'CFST',
+        subject: `Misto: ${mixedTitles.slice(0, 2).join(', ')}${mixedTitles.length > 2 ? '...' : ''}`,
+        institution: 'CFST 26/2',
+        instructions: 'Simulado mesclando questões das matérias da nuvem com conteúdos dos novos arquivos anexados.',
+        questions: finalMixedQuestions.map((q, idx) =>
+          normalizeQuestion(q, idx, mixedId)
+        ),
+        totalTimeMinutes: finalMixedQuestions.length * 12,
+        isCustom: true,
+        createdAt: new Date().toISOString(),
+      };
+
+      setExams((prev) => [mixedExam, ...prev]);
+      setActiveExamId(mixedExam.id);
+      if (config.mode === 'simulado') setActiveTab('simulados');
+      else if (config.mode === 'flashcards') setActiveTab('flashcards');
+      return;
     } else if (config.materialSource === 'upload') {
       // If user uploaded docs or text, call the real AI endpoint
       if ((config.uploadedDocs && config.uploadedDocs.length > 0) || config.uploadedText) {
@@ -278,8 +479,9 @@ export default function App() {
 
           if (res.ok) {
             const examData = await res.json();
+            const aiExamId = `custom-exam-${Date.now()}`;
             const aiExam: Exam = {
-              id: `custom-exam-${Date.now()}`,
+              id: aiExamId,
               title: 'SIMULADO',
               course: 'CFST',
               subject: config.uploadedDocs && config.uploadedDocs.length > 0
@@ -290,7 +492,9 @@ export default function App() {
                 examData.instructions ||
                 'Simulado formulado exclusivamente a partir dos arquivos fornecidos.',
               totalTimeMinutes: examData.totalTimeMinutes || config.questionCount * 15,
-              questions: examData.questions || [],
+              questions: (examData.questions || []).map((q: any, idx: number) =>
+                normalizeQuestion(q, idx, aiExamId)
+              ),
               isCustom: true,
               createdAt: new Date().toISOString(),
             };
@@ -490,7 +694,14 @@ export default function App() {
           </div>
         )}
 
-        {/* Tab 3: Subir Arquivos / Materiais */}
+        {/* Tab 3: Criptografia & Autenticação (Págs 1 a 44 Q-402) */}
+        {activeTab === 'criptografia' && (
+          <div className="pt-2">
+            <CryptographyModule onAwardGaivota={handleAwardCryptoGaivota} />
+          </div>
+        )}
+
+        {/* Tab 4: Subir Arquivos / Materiais */}
         {activeTab === 'materiais' && (
           <div className="pt-2">
             <MaterialUploadHub

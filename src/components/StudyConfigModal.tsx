@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { DifficultyLevel, Exam, StudyMode, StudySessionConfig, UploadedDoc } from '../types/exam';
 import { readFileAsDoc } from '../utils/fileReader';
+import { CLOUD_STORAGE_FILES } from '../data/cloudMaterials';
 
 interface StudyConfigModalProps {
   isOpen: boolean;
@@ -9,6 +10,7 @@ interface StudyConfigModalProps {
   missedQuestionsCount?: number;
   existingExams: Exam[];
   onResetCadernos?: () => void;
+  onDeleteExam?: (examId: string) => void;
 }
 
 export const StudyConfigModal: React.FC<StudyConfigModalProps> = ({
@@ -18,13 +20,17 @@ export const StudyConfigModal: React.FC<StudyConfigModalProps> = ({
   missedQuestionsCount = 0,
   existingExams = [],
   onResetCadernos,
+  onDeleteExam,
 }) => {
   const [mode, setMode] = useState<StudyMode>('simulado');
-  const [materialSource, setMaterialSource] = useState<'nuvem' | 'upload'>(
+  const [materialSource, setMaterialSource] = useState<'nuvem' | 'upload' | 'misto'>(
     existingExams && existingExams.length > 0 ? 'nuvem' : 'upload'
   );
   const [selectedCloudExamId, setSelectedCloudExamId] = useState<string>(
     existingExams[0]?.id || ''
+  );
+  const [selectedCloudExamIds, setSelectedCloudExamIds] = useState<string[]>(
+    existingExams && existingExams.length > 0 ? existingExams.map((e) => e.id) : []
   );
   const [difficulty, setDifficulty] = useState<DifficultyLevel>('medio');
   const [questionCount, setQuestionCount] = useState<number>(5);
@@ -37,6 +43,20 @@ export const StudyConfigModal: React.FC<StudyConfigModalProps> = ({
   const [uploadFeedback, setUploadFeedback] = useState<string | null>(null);
 
   if (!isOpen) return null;
+
+  const toggleCloudExam = (id: string) => {
+    setSelectedCloudExamIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  };
+
+  const handleToggleAllCloudExams = () => {
+    if (selectedCloudExamIds.length === existingExams.length) {
+      setSelectedCloudExamIds([]);
+    } else {
+      setSelectedCloudExamIds(existingExams.map((e) => e.id));
+    }
+  };
 
   const handleMultipleFiles = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -74,13 +94,47 @@ export const StudyConfigModal: React.FC<StudyConfigModalProps> = ({
     e.preventDefault();
 
     if (materialSource === 'upload' && uploadedDocs.length === 0 && !uploadedText.trim()) {
-      setUploadFeedback('Por favor, anexe ao menos um arquivo (PDF, imagens, documento) para que as questões sejam formuladas exclusivamente com base nele.');
+      setUploadFeedback('Por favor, anexe ao menos um arquivo (PDF, imagens, documento) para formular as questões.');
       return;
     }
 
-    if (materialSource === 'nuvem' && existingExams.length === 0) {
-      setUploadFeedback('Nenhum caderno salvo no aplicativo. Mude para "Subir Meu Material" para anexar seus arquivos.');
-      return;
+    if (materialSource === 'nuvem') {
+      if (existingExams.length === 0) {
+        setUploadFeedback('Nenhum caderno salvo no aplicativo. Mude para "Subir Meu Material" ou "Misto".');
+        return;
+      }
+      if (selectedCloudExamIds.length === 0 && !selectedCloudExamId) {
+        setUploadFeedback('Selecione ao menos uma matéria da nuvem para iniciar o estudo.');
+        return;
+      }
+    }
+
+    if (materialSource === 'misto') {
+      if (selectedCloudExamIds.length === 0 && uploadedDocs.length === 0 && !uploadedText.trim()) {
+        setUploadFeedback('No Simulado Misto, selecione ao menos uma matéria da nuvem OU anexe um novo arquivo para mesclar.');
+        return;
+      }
+    }
+
+    const selectedTitles = existingExams
+      .filter((ex) => selectedCloudExamIds.includes(ex.id))
+      .map((ex) => ex.title);
+
+    let sessionSubject = 'CFST 26/2';
+    if (materialSource === 'misto') {
+      const cloudPart = selectedTitles.length > 0 ? selectedTitles.slice(0, 2).join(' + ') : 'Nuvem';
+      const uploadPart = uploadedDocs.length > 0 ? `+ ${uploadedDocs.length} arquivo(s)` : '';
+      sessionSubject = `Misto: ${cloudPart} ${uploadPart}`.trim();
+    } else if (materialSource === 'nuvem') {
+      sessionSubject = selectedTitles.length === 1
+        ? selectedTitles[0]
+        : selectedTitles.length > 1
+        ? `Múltiplas Matérias (${selectedTitles.length})`
+        : 'CFST 26/2';
+    } else {
+      sessionSubject = uploadedDocs.length > 0
+        ? `Material Próprio (${uploadedDocs.length} arquivos)`
+        : 'Material Próprio CFST 26/2';
     }
 
     onStartSession({
@@ -88,16 +142,13 @@ export const StudyConfigModal: React.FC<StudyConfigModalProps> = ({
       difficulty,
       questionCount,
       materialSource,
-      selectedCloudExamId: materialSource === 'nuvem' ? selectedCloudExamId : undefined,
-      uploadedFiles: materialSource === 'upload' ? uploadedDocs.map((d) => ({ name: d.name, size: d.size })) : undefined,
-      uploadedDocs: materialSource === 'upload' ? uploadedDocs : undefined,
-      uploadedText: materialSource === 'upload' ? uploadedText : undefined,
+      selectedCloudExamId: materialSource === 'nuvem' && selectedCloudExamIds.length === 1 ? selectedCloudExamIds[0] : selectedCloudExamId,
+      selectedCloudExamIds: selectedCloudExamIds.length > 0 ? selectedCloudExamIds : [selectedCloudExamId],
+      uploadedFiles: (materialSource === 'upload' || materialSource === 'misto') ? uploadedDocs.map((d) => ({ name: d.name, size: d.size })) : undefined,
+      uploadedDocs: (materialSource === 'upload' || materialSource === 'misto') ? uploadedDocs : undefined,
+      uploadedText: (materialSource === 'upload' || materialSource === 'misto') ? uploadedText : undefined,
       course: 'CFST',
-      subject: materialSource === 'nuvem'
-        ? existingExams.find((ex) => ex.id === selectedCloudExamId)?.title || 'CFST 26/2'
-        : uploadedDocs.length > 0
-        ? `Material Próprio (${uploadedDocs.length} arquivos)`
-        : 'Material Próprio CFST 26/2',
+      subject: sessionSubject,
       avoidRepeatedQuestions,
       enableSpacedRepetition,
     });
@@ -223,42 +274,75 @@ export const StudyConfigModal: React.FC<StudyConfigModalProps> = ({
               2. Material de Estudo
             </label>
 
-            {/* Selector: Nuvem vs Subir Arquivo */}
-            <div className="grid grid-cols-2 gap-2 p-1 bg-black/40 border border-white/15 rounded-2xl">
+            {/* Selector: Nuvem vs Subir Arquivo vs Misto */}
+            <div className="grid grid-cols-3 gap-1.5 p-1 bg-black/40 border border-white/15 rounded-2xl">
               <button
                 type="button"
                 onClick={() => setMaterialSource('nuvem')}
-                className={`py-2 px-3 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                className={`py-2 px-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1 cursor-pointer ${
                   materialSource === 'nuvem'
                     ? 'bg-emerald-400 text-slate-950 shadow-md font-bold'
                     : 'text-slate-300 hover:text-white hover:bg-white/5'
                 }`}
               >
                 <span>☁️</span>
-                <span>Material na Nuvem</span>
+                <span>Nuvem</span>
               </button>
               <button
                 type="button"
                 onClick={() => setMaterialSource('upload')}
-                className={`py-2 px-3 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                className={`py-2 px-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1 cursor-pointer ${
                   materialSource === 'upload'
                     ? 'bg-emerald-400 text-slate-950 shadow-md font-bold'
                     : 'text-slate-300 hover:text-white hover:bg-white/5'
                 }`}
               >
                 <span>📤</span>
-                <span>Subir Meu Material</span>
+                <span>Novos Arquivos</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setMaterialSource('misto')}
+                className={`py-2 px-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1 cursor-pointer ${
+                  materialSource === 'misto'
+                    ? 'bg-amber-400 text-slate-950 shadow-md font-bold'
+                    : 'text-slate-300 hover:text-white hover:bg-white/5'
+                }`}
+              >
+                <span>⚡</span>
+                <span>Misto</span>
               </button>
             </div>
 
-            {/* Content for Nuvem Option */}
-            {materialSource === 'nuvem' ? (
+            {/* Misto Mode Banner */}
+            {materialSource === 'misto' && (
+              <div className="p-3 rounded-xl bg-amber-500/15 border border-amber-400/30 text-xs text-amber-200 flex items-start gap-2">
+                <span className="text-base shrink-0">⚡</span>
+                <div className="leading-relaxed">
+                  <strong>Simulado Misto:</strong> O simulado irá mesclar proporcionalmente as questões das matérias da nuvem selecionadas abaixo com as questões geradas dos seus novos arquivos.
+                </div>
+              </div>
+            )}
+
+            {/* Section A: Nuvem or Misto (Cloud Exams Multi-Selection) */}
+            {(materialSource === 'nuvem' || materialSource === 'misto') && (
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-slate-300 block">
-                    Selecione o pacote ou simulado na nuvem:
-                  </span>
-                  {onResetCadernos && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-slate-300 font-semibold block">
+                      {materialSource === 'misto' ? '1. Matérias da nuvem para incluir:' : 'Selecione as matérias da nuvem:'}
+                    </span>
+                    {existingExams.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={handleToggleAllCloudExams}
+                        className="text-[10px] text-emerald-400 hover:text-emerald-300 font-bold underline cursor-pointer"
+                      >
+                        {selectedCloudExamIds.length === existingExams.length ? 'Desmarcar Todas' : 'Selecionar Todas'}
+                      </button>
+                    )}
+                  </div>
+                  {onResetCadernos && materialSource === 'nuvem' && (
                     <button
                       type="button"
                       onClick={onResetCadernos}
@@ -271,57 +355,109 @@ export const StudyConfigModal: React.FC<StudyConfigModalProps> = ({
                 </div>
 
                 {existingExams && existingExams.length > 0 ? (
-                  <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
-                    {existingExams.map((ex) => (
-                      <label
-                        key={ex.id}
-                        className={`p-3 rounded-xl border flex items-center justify-between gap-3 cursor-pointer transition-all ${
-                          selectedCloudExamId === ex.id
-                            ? 'border-emerald-500 bg-emerald-600/25 text-white'
-                            : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10'
-                        }`}
-                      >
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          <input
-                            type="radio"
-                            name="cloudExam"
-                            checked={selectedCloudExamId === ex.id}
-                            onChange={() => setSelectedCloudExamId(ex.id)}
-                            className="accent-emerald-500 w-4 h-4 cursor-pointer"
-                          />
-                          <div className="truncate">
-                            <p className="text-xs font-bold text-white truncate">{ex.title}</p>
-                            <p className="text-[11px] text-slate-400 truncate">{ex.subject}</p>
+                  <div className="space-y-1.5 max-h-52 overflow-y-auto pr-1">
+                    {existingExams.map((ex) => {
+                      const isChecked = selectedCloudExamIds.includes(ex.id);
+                      const matchingCloudDoc = CLOUD_STORAGE_FILES.find(
+                        (f) =>
+                          f.associatedExamId === ex.id ||
+                          ex.title.toLowerCase().includes(f.title.toLowerCase().slice(0, 8)) ||
+                          ex.subject.toLowerCase().includes(f.subject.toLowerCase().slice(0, 8))
+                      );
+
+                      return (
+                        <div
+                          key={ex.id}
+                          onClick={() => toggleCloudExam(ex.id)}
+                          className={`p-2.5 rounded-xl border flex items-center justify-between gap-3 cursor-pointer transition-all ${
+                            isChecked
+                              ? 'border-emerald-500/80 bg-emerald-600/20 text-white'
+                              : 'border-white/10 bg-white/5 text-slate-400 hover:bg-white/10'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                            <input
+                              type="checkbox"
+                              checked={isChecked}
+                              onChange={() => toggleCloudExam(ex.id)}
+                              className="accent-emerald-500 w-4 h-4 rounded cursor-pointer shrink-0"
+                            />
+                            <div className="truncate">
+                              <div className="flex items-center gap-1.5 truncate">
+                                <p className={`text-xs font-bold truncate ${isChecked ? 'text-white' : 'text-slate-300'}`}>
+                                  {ex.title}
+                                </p>
+                                {matchingCloudDoc && (
+                                  <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30 shrink-0">
+                                    PDF Nuvem
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-[10px] text-slate-400 truncate">{ex.subject}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            {matchingCloudDoc && (
+                              <a
+                                href={matchingCloudDoc.localUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={(e) => e.stopPropagation()}
+                                className="text-[10px] text-slate-300 hover:text-white px-1.5 py-0.5 rounded bg-white/10 hover:bg-white/20 transition-colors"
+                                title={`Abrir PDF: ${matchingCloudDoc.name}`}
+                              >
+                                👁️ PDF
+                              </a>
+                            )}
+                            <span className="text-[10px] font-mono text-emerald-300 font-bold bg-emerald-500/20 px-2 py-0.5 rounded-md">
+                              {ex.questions.length} q.
+                            </span>
+                            {onDeleteExam && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (window.confirm(`Excluir o caderno "${ex.title}"?`)) {
+                                    onDeleteExam(ex.id);
+                                  }
+                                }}
+                                className="p-1 text-slate-400 hover:text-rose-400 rounded-lg hover:bg-rose-500/10 transition-colors cursor-pointer text-xs"
+                                title="Excluir este caderno individualmente"
+                              >
+                                🗑️
+                              </button>
+                            )}
                           </div>
                         </div>
-                        <span className="text-[11px] font-mono text-emerald-300 font-bold shrink-0">
-                          {ex.questions.length} questões
-                        </span>
-                      </label>
-                    ))}
+                      );
+                    })}
                   </div>
                 ) : (
                   <div className="p-4 rounded-2xl bg-white/5 border border-white/10 text-center space-y-2.5">
                     <p className="text-xs text-slate-300">
-                      O aplicativo está zerado sem nenhum caderno anterior.
+                      Nenhum caderno salvo na nuvem ainda.
                     </p>
                     <button
                       type="button"
                       onClick={() => setMaterialSource('upload')}
                       className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-md"
                     >
-                      <span>Subir Meus Arquivos Agora</span>
+                      <span>Subir Novos Arquivos Agora</span>
                       <span>→</span>
                     </button>
                   </div>
                 )}
               </div>
-            ) : (
-              /* Content for Upload Option */
+            )}
+
+            {/* Section B: Upload or Misto (File Upload Dropzone) */}
+            {(materialSource === 'upload' || materialSource === 'misto') && (
               <div className="space-y-3 p-3.5 rounded-2xl bg-white/5 border border-white/10">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-semibold text-white">
-                    Suba seus arquivos (PowerPoint, PDF, Word, Excel, fotos):
+                    {materialSource === 'misto'
+                      ? '2. Novos Arquivos para Mesclar (PowerPoint, PDF, Word, fotos):'
+                      : 'Suba seus arquivos (PowerPoint, PDF, Word, Excel, fotos):'}
                   </span>
                   <span className="text-[10px] text-emerald-400 font-mono">Multi-formato</span>
                 </div>
@@ -340,7 +476,7 @@ export const StudyConfigModal: React.FC<StudyConfigModalProps> = ({
                     className="cursor-pointer flex flex-col items-center gap-1.5"
                   >
                     <span className="text-xs font-bold text-emerald-300">
-                      📁 Toque para selecionar arquivos (PowerPoint, PDF, Word, etc.)
+                      📁 Toque para selecionar novos arquivos
                     </span>
                     <span className="text-[11px] text-slate-400">
                       Pode selecionar múltiplos arquivos de uma vez sem limite
@@ -352,7 +488,7 @@ export const StudyConfigModal: React.FC<StudyConfigModalProps> = ({
                 {uploadedDocs.length > 0 && (
                   <div className="space-y-1.5">
                     <span className="text-[11px] font-bold text-slate-300">
-                      Arquivos prontos ({uploadedDocs.length}):
+                      Arquivos prontos para processar ({uploadedDocs.length}):
                     </span>
                     <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto">
                       {uploadedDocs.map((file, idx) => (

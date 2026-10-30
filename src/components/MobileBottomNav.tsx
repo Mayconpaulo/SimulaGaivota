@@ -1,8 +1,8 @@
 import React from 'react';
 
 interface MobileBottomNavProps {
-  activeTab: 'simulados' | 'flashcards' | 'materiais' | 'desempenho';
-  onSelectTab: (tab: 'simulados' | 'flashcards' | 'materiais' | 'desempenho') => void;
+  activeTab: 'simulados' | 'flashcards' | 'criptografia' | 'materiais' | 'desempenho';
+  onSelectTab: (tab: 'simulados' | 'flashcards' | 'criptografia' | 'materiais' | 'desempenho') => void;
   totalGaivotasEarned: number;
 }
 
@@ -16,7 +16,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
       aria-label="Navegação Mobile iOS Dock"
       className="lg:hidden fixed bottom-0 left-0 right-0 z-40 liquid-glass-dock pb-safe"
     >
-      <div className="grid grid-cols-4 items-center h-16 max-w-lg mx-auto px-1">
+      <div className="grid grid-cols-5 items-center h-16 max-w-lg mx-auto px-1">
         {/* Tab 1: Simulados */}
         <button
           type="button"
@@ -52,6 +52,23 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
             </svg>
           </div>
           <span className="text-[10px] tracking-tight mt-0.5 truncate">Cards</span>
+        </button>
+
+        {/* Tab 3: Criptografia */}
+        <button
+          type="button"
+          onClick={() => onSelectTab('criptografia')}
+          className={`min-h-[48px] flex flex-col items-center justify-center transition-all select-none active:scale-90 ${
+            activeTab === 'criptografia' ? 'text-amber-400 font-bold' : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <div className={`p-1 rounded-xl transition-colors ${activeTab === 'criptografia' ? 'bg-amber-500/20' : ''}`}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+            </svg>
+          </div>
+          <span className="text-[10px] tracking-tight mt-0.5 truncate">Cripto</span>
         </button>
 
         {/* Tab 4: Subir Arquivos */}

@@ -1,8 +1,8 @@
 import React from 'react';
 
 interface NavbarProps {
-  activeTab: 'simulados' | 'flashcards' | 'materiais' | 'desempenho';
-  onSelectTab: (tab: 'simulados' | 'flashcards' | 'materiais' | 'desempenho') => void;
+  activeTab: 'simulados' | 'flashcards' | 'criptografia' | 'materiais' | 'desempenho';
+  onSelectTab: (tab: 'simulados' | 'flashcards' | 'criptografia' | 'materiais' | 'desempenho') => void;
   onOpenStudySetup: () => void;
   onOpenInstallModal: () => void;
   totalGaivotasEarned: number;
@@ -62,6 +62,18 @@ export const Navbar: React.FC<NavbarProps> = ({
             }`}
           >
             Cards
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onSelectTab('criptografia')}
+            className={`px-3.5 py-1.5 rounded-xl whitespace-nowrap shrink-0 transition-all cursor-pointer ${
+              activeTab === 'criptografia'
+                ? 'bg-amber-500/25 text-amber-300 shadow-xs font-bold border border-amber-400/40'
+                : 'hover:text-white hover:bg-white/5'
+            }`}
+          >
+            🔐 Criptografia
           </button>
 
           <button

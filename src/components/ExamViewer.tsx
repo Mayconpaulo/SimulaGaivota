@@ -4,6 +4,7 @@ import { GaivotaIcon } from './GaivotaIcon';
 import { DiscursiveEvaluationModal } from './DiscursiveEvaluationModal';
 import { MilitaryDiagramRenderer } from './MilitaryDiagramRenderer';
 import { normalizeQuestion } from '../utils/questionNormalizer';
+import { getContextualOptions, isGibberishOrDummy } from '../utils/contextualOptions';
 
 interface ExamViewerProps {
   exam: Exam;
@@ -11,6 +12,7 @@ interface ExamViewerProps {
   onBackToList?: () => void;
   initialAnswers?: Record<string, StudentAnswer>;
   onRenameExam?: (examId: string, newTitle: string, newSubject?: string) => void;
+  onDeleteExam?: (examId: string) => void;
 }
 
 export const ExamViewer: React.FC<ExamViewerProps> = ({
@@ -19,6 +21,7 @@ export const ExamViewer: React.FC<ExamViewerProps> = ({
   onBackToList,
   initialAnswers = {},
   onRenameExam,
+  onDeleteExam,
 }) => {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
 
@@ -87,7 +90,13 @@ export const ExamViewer: React.FC<ExamViewerProps> = ({
       ];
     }
 
-    if (currentQ.options && currentQ.options.length > 0) return currentQ.options;
+    if (
+      currentQ.options &&
+      currentQ.options.length >= 4 &&
+      currentQ.options.every((o) => o && o.text && !isGibberishOrDummy(o.text))
+    ) {
+      return currentQ.options;
+    }
 
     if (currentQ.subType === 'column_match') {
       return [
@@ -99,23 +108,13 @@ export const ExamViewer: React.FC<ExamViewerProps> = ({
       ];
     }
 
-    if (currentQ.subType === 'fill_in_blank') {
-      return [
-        { letter: 'A' as const, text: 'força de expansão dos gases / repetição' },
-        { letter: 'B' as const, text: 'ação muscular do atirador / repetição' },
-        { letter: 'C' as const, text: 'recuo do cano / semiautomático' },
-        { letter: 'D' as const, text: 'massa inercial do ferrolho / automático' },
-        { letter: 'E' as const, text: 'ação mista / repetição' },
-      ];
-    }
-
-    return [
-      { letter: 'A' as const, text: currentQ.modelAnswer || 'Alternativa A (Conforme instrução militar)' },
-      { letter: 'B' as const, text: 'Alternativa B (Discrepante quanto aos manuais)' },
-      { letter: 'C' as const, text: 'Alternativa C (Incompleta quanto aos procedimentos operacionais)' },
-      { letter: 'D' as const, text: 'Alternativa D (Incorreta segundo as normas do Exército)' },
-      { letter: 'E' as const, text: 'Alternativa E (Inaplicável ao contexto militar apresentado)' },
-    ];
+    return getContextualOptions(
+      currentQ.prompt,
+      currentQ.subject,
+      currentQ.subType,
+      currentQ.modelAnswer,
+      currentQ.options
+    );
   }, [currentQ]);
 
   const handleUpdateText = (text: string) => {
@@ -320,6 +319,20 @@ export const ExamViewer: React.FC<ExamViewerProps> = ({
                     ✏️
                   </button>
                 )}
+                {onDeleteExam && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (window.confirm(`Deseja realmente excluir o caderno "${exam.title}"?`)) {
+                        onDeleteExam(exam.id);
+                      }
+                    }}
+                    className="p-1 text-slate-400 hover:text-rose-400 rounded-lg hover:bg-rose-500/10 transition-colors cursor-pointer"
+                    title="Excluir este caderno individualmente"
+                  >
+                    🗑️
+                  </button>
+                )}
               </div>
             )}
             <p className="text-xs text-slate-400">
@@ -495,26 +508,39 @@ export const ExamViewer: React.FC<ExamViewerProps> = ({
             </h2>
           </div>
 
-          {/* 3. Fill in the Blanks Callout */}
-          {currentQ.subType === 'fill_in_blank' && currentQ.blanksSentence && (
+          {/* 3. Fill in the Blanks Callout (ALWAYS rendered for fill_in_blank) */}
+          {currentQ.subType === 'fill_in_blank' && (
             <div className="p-4 rounded-2xl bg-emerald-950/30 border border-emerald-500/40 space-y-2">
               <span className="text-xs font-mono font-bold uppercase tracking-wider text-emerald-400 block">
                 📝 Frase com Lacunas para Preenchimento:
               </span>
               <div className="p-3.5 rounded-xl bg-black/40 border border-white/10 text-sm sm:text-base text-white leading-relaxed font-medium">
-                {currentQ.blanksSentence.split(/(\[[\s_]*\([0-9]+\)[\s_]*\]|\[[\s_]+\])/g).map((chunk, i) => {
-                  if (chunk.startsWith('[') && chunk.endsWith(']')) {
-                    return (
-                      <span
-                        key={i}
-                        className="inline-block mx-1 px-2.5 py-0.5 rounded-lg bg-emerald-500/20 border border-emerald-400/50 text-emerald-300 font-mono font-bold text-xs"
-                      >
-                        {chunk}
-                      </span>
-                    );
-                  }
-                  return <span key={i}>{chunk}</span>;
-                })}
+                {(() => {
+                  const sentenceToRender =
+                    currentQ.blanksSentence ||
+                    (currentQ.prompt && (currentQ.prompt.includes('_____') || currentQ.prompt.includes('[')) ? currentQ.prompt : null) ||
+                    'De acordo com a doutrina, o conceito é estruturado por [ _____ (1) _____ ] e concluído por [ _____ (2) _____ ].';
+
+                  return sentenceToRender
+                    .split(/(\[[\s_]*\([0-9]+\)[\s_]*\]|\[[\s_]+\]|_____+\([0-9]+\)_____+|_____+\s*\([0-9]+\)|_____+)/g)
+                    .map((chunk, i) => {
+                      if (
+                        (chunk.startsWith('[') && chunk.endsWith(']')) ||
+                        chunk.includes('_____') ||
+                        chunk.startsWith('___')
+                      ) {
+                        return (
+                          <span
+                            key={i}
+                            className="inline-block mx-1 px-2.5 py-0.5 rounded-lg bg-emerald-500/20 border border-emerald-400/50 text-emerald-300 font-mono font-bold text-xs"
+                          >
+                            {chunk}
+                          </span>
+                        );
+                      }
+                      return <span key={i}>{chunk}</span>;
+                    });
+                })()}
               </div>
               <span className="text-[11px] text-slate-400 block">
                 Escolha no cartão resposta a alternativa que preenche as lacunas na sequência exata.
@@ -531,27 +557,43 @@ export const ExamViewer: React.FC<ExamViewerProps> = ({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <span className="text-xs font-bold text-slate-300 block border-b border-white/10 pb-1">
-                    Coluna I
+                    Coluna I (Numérica)
                   </span>
-                  {currentQ.columnA.map((item) => (
-                    <div key={item.key} className="p-2.5 rounded-xl bg-black/30 border border-white/10 text-xs text-slate-200 flex items-start gap-2">
-                      <span className="font-mono font-bold text-emerald-400 shrink-0">({item.key})</span>
-                      <span className="leading-snug">{item.text}</span>
-                    </div>
-                  ))}
+                  {currentQ.columnA.map((item, idx) => {
+                    const numKey = item.key && item.key.trim() ? item.key.trim() : String(idx + 1);
+                    return (
+                      <div key={item.key || idx} className="p-2.5 rounded-xl bg-black/30 border border-white/10 text-xs text-slate-200 flex items-start gap-2.5 hover:border-white/20 transition-colors">
+                        <span className="font-mono font-bold text-emerald-300 bg-emerald-500/20 border border-emerald-400/40 px-2 py-0.5 rounded-md shrink-0 text-xs">
+                          ({numKey})
+                        </span>
+                        <span className="leading-snug pt-0.5">{item.text}</span>
+                      </div>
+                    );
+                  })}
                 </div>
                 <div className="space-y-2">
                   <span className="text-xs font-bold text-slate-300 block border-b border-white/10 pb-1">
-                    Coluna II
+                    Coluna II (Letras)
                   </span>
-                  {currentQ.columnB.map((item) => (
-                    <div key={item.key} className="p-2.5 rounded-xl bg-black/30 border border-white/10 text-xs text-slate-200 flex items-start gap-2">
-                      <span className="font-mono font-bold text-slate-400 shrink-0">( &nbsp; )</span>
-                      <span className="leading-snug">{item.text}</span>
-                    </div>
-                  ))}
+                  {currentQ.columnB.map((item, idx) => {
+                    const letterKey =
+                      item.key && /^[A-Z]$/i.test(item.key.trim())
+                        ? item.key.trim().toUpperCase()
+                        : String.fromCharCode(65 + idx);
+                    return (
+                      <div key={item.key || idx} className="p-2.5 rounded-xl bg-black/30 border border-white/10 text-xs text-slate-200 flex items-start gap-2.5 hover:border-white/20 transition-colors">
+                        <span className="font-mono font-bold text-amber-300 bg-amber-500/20 border border-amber-400/40 px-2 py-0.5 rounded-md shrink-0 text-xs">
+                          ({letterKey})
+                        </span>
+                        <span className="leading-snug pt-0.5">{item.text}</span>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
+              <p className="text-[11px] text-slate-400 italic">
+                Dica: Relacione cada número da Coluna I com a respectiva letra da Coluna II (A, B, C, D) e assinale a sequência correspondente no Cartão Resposta ao lado.
+              </p>
             </div>
           )}
 

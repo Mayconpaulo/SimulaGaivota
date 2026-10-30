@@ -132,8 +132,9 @@ export interface StudySessionConfig {
   difficulty: DifficultyLevel;
   questionCount: number;
   examId?: string;
-  materialSource?: 'nuvem' | 'upload';
+  materialSource?: 'nuvem' | 'upload' | 'misto';
   selectedCloudExamId?: string;
+  selectedCloudExamIds?: string[];
   uploadedFiles?: Array<{ name: string; size: string }>;
   uploadedDocs?: UploadedDoc[];
   uploadedText?: string;

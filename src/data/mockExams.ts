@@ -1,4 +1,4 @@
 import { Exam } from '../types/exam';
+import { OFFICIAL_EXAMS } from './officialExams';
 
-// O aplicativo inicia completamente zerado, sem nenhum caderno ou conteúdo pré-existente
-export const INITIAL_EXAMS: Exam[] = [];
+export const INITIAL_EXAMS: Exam[] = OFFICIAL_EXAMS;

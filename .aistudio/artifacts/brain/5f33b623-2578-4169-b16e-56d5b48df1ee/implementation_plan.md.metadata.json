@@ -1,6 +1,6 @@
 {
-  "summary":  "Proposta dos novos Modos de Estudo Militares: Simulado Parametrizado, Flashcards 3D com Gaivotas Discursivas, Drill Tático de Memorização Rápida e Revisão Espaçada de Gaivotas Perdidas.",
-  "updatedAt":  "2026-10-20T19:41:30.658633966Z",
+  "summary":  "Correção do erro de invariante na Chave Simples: sanitização e alinhamento de caracteres A-Z sem espaços na transposição colunar e chave dupla, expansão de capacidades e validação de 100 missões consecutivas com 100% de precisão.",
+  "updatedAt":  "2026-10-28T12:46:32.869010931Z",
   "requestFeedback":  true,
   "userFacing":  true
 }

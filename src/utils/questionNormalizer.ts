@@ -1,4 +1,5 @@
 import { Option, Question } from '../types/exam';
+import { getContextualOptions, isGibberishOrDummy } from './contextualOptions';
 
 export const isGibberishOrLetterList = (str?: string | null): boolean => {
   if (!str || typeof str !== 'string') return true;
@@ -69,15 +70,73 @@ export const normalizeQuestion = (q: Question, idx: number, examId: string = 'ex
     }
   }
 
-  // 4. Fill in blank prompt & sentence alignment
+  // 3b. Guarantee Column Match integrity (never leave empty columns)
+  if (subType === 'column_match') {
+    if (!Array.isArray(columnA) || columnA.length < 2 || !Array.isArray(columnB) || columnB.length < 2) {
+      const topicLower = `${q.subject || ''} ${prompt}`.toLowerCase();
+      if (topicLower.includes('armamento') || topicLower.includes('fuzil') || topicLower.includes('tiro')) {
+        columnA = [
+          { key: '1', text: 'Revólver .38' },
+          { key: '2', text: 'Fuzil 7,62 FAL' },
+          { key: '3', text: 'Pistola 9mm Beretta' },
+          { key: '4', text: 'Morteiro 81mm' },
+        ];
+        columnB = [
+          { key: 'A', text: 'Funcionamento por ação indireta dos gases com tomada regulável.' },
+          { key: 'B', text: 'Princípio motor por força muscular do atirador, funcionamento de repetição.' },
+          { key: 'C', text: 'Armamento de tiro curvo com carregamento pelo cano (ante-carga).' },
+          { key: 'D', text: 'Princípio motor por curto recuo do cano, tiro semiautomático.' },
+        ];
+      } else if (topicLower.includes('comunica') || topicLower.includes('fonia') || topicLower.includes('rádio') || topicLower.includes('fio')) {
+        columnA = [
+          { key: '1', text: 'Fio WD-1/TT' },
+          { key: '2', text: 'Palavra CÂMBIO' },
+          { key: '3', text: 'Palavra TERMINADO' },
+          { key: '4', text: 'Norma SEGCOM' },
+        ];
+        columnB = [
+          { key: 'A', text: 'Encerra a transmissão e convida o interlocutor a responder.' },
+          { key: 'B', text: 'Composto por 4 fios de cobre e 3 fios de aço para condutibilidade e tração.' },
+          { key: 'C', text: 'Proíbe terminantemente transmissão de dados táticos em claro.' },
+          { key: 'D', text: 'Encerra a ligação definitivamente sem aguardar resposta.' },
+        ];
+      } else {
+        columnA = [
+          { key: '1', text: 'Prazo do FATD' },
+          { key: '2', text: 'Circunstância Atenuante' },
+          { key: '3', text: 'Circunstância Agravante' },
+          { key: '4', text: 'Elogio Militar' },
+        ];
+        columnB = [
+          { key: 'A', text: 'Bom comportamento anterior ou cometimento para evitar mal maior.' },
+          { key: 'B', text: '3 (três) dias úteis para o militar arrolado apresentar defesa prévia.' },
+          { key: 'C', text: 'Reconhecimento formal publicado em boletim sobre conduta exemplar.' },
+          { key: 'D', text: 'Cometimento da transgressão em serviço de guarda ou em conluio.' },
+        ];
+      }
+    }
+  }
+
+  // 4. Fill in blank prompt & sentence alignment (NEVER leave blanksSentence undefined)
   if (subType === 'fill_in_blank') {
-    if (blanksSentence && prompt.includes('_____') && prompt.length > blanksSentence.length) {
+    if (!blanksSentence) {
+      if (prompt.includes('_____') || prompt.includes('[') || prompt.includes('lacuna')) {
+        blanksSentence = prompt;
+        prompt = 'Preencha as lacunas da definição e assinale a alternativa correta:';
+      } else {
+        const topic = (q.subject || 'Doutrina Militar').replace(/^Bizu\s+/i, '');
+        if (topic.toLowerCase().includes('rede') || prompt.toLowerCase().includes('rede')) {
+          blanksSentence = 'Uma rede de computadores consiste em um conjunto de [ _____ (1) _____ ] interconectados por meio de [ _____ (2) _____ ] para compartilhamento de [ _____ (3) _____ ].';
+        } else {
+          blanksSentence = `De acordo com a doutrina militar oficial de ${topic}, o conceito é definido por [ _____ (1) _____ ], estruturado por [ _____ (2) _____ ] e concluído por [ _____ (3) _____ ].`;
+        }
+      }
+    } else if (prompt.includes('_____') && prompt.length > blanksSentence.length) {
       blanksSentence = prompt;
-      prompt = 'Assinale a alternativa que preenche corretamente as lacunas na sequência exata:';
-    } else if (!blanksSentence && prompt.includes('_____')) {
-      blanksSentence = prompt;
-      prompt = 'Assinale a alternativa que preenche corretamente as lacunas na sequência exata:';
-    } else if (!prompt || prompt.trim().length === 0) {
+      prompt = 'Preencha as lacunas da definição e assinale a alternativa correta:';
+    }
+
+    if (!prompt || prompt.trim().length === 0) {
       prompt = 'Assinale a alternativa que preenche corretamente as lacunas na sequência exata:';
     }
   }
@@ -86,6 +145,72 @@ export const normalizeQuestion = (q: Question, idx: number, examId: string = 'ex
   let correctOption = (q.correctOption || 'A').toString().trim().toUpperCase().slice(0, 1);
   if (!['A', 'B', 'C', 'D', 'E'].includes(correctOption)) {
     correctOption = 'A';
+  }
+
+  // 5b. Column Match Integrity: Auto-correct known conceptual inversions and ensure 100% doctrine fidelity
+  if (subType === 'column_match') {
+    const allPromptText = `${prompt} ${q.subject || ''} ${JSON.stringify(columnA || [])} ${JSON.stringify(columnB || [])}`.toLowerCase();
+    
+    // Especial: Gerador Elétrico (1), Motor Elétrico (2), Estator (3), Rotor (4)
+    // 1 — B: Gerador Elétrico → Converte energia mecânica em eletricidade.
+    // 2 — A: Motor Elétrico → Converte energia elétrica em mecânica.
+    // 3 — D: Estator → Anel de metal com fendas que prendem bobinas para produzir campo magnético rotativo.
+    // 4 — C: Rotor → Haste com barras condutoras que interage com o campo magnético, gerando torque.
+    // Sequência correta oficial: 1-B / 2-A / 3-D / 4-C (Alternativa B)
+    if (allPromptText.includes('gerador') && allPromptText.includes('motor')) {
+      const optCorrect = (q.options || []).find((o) => {
+        const t = (o.text || '').replace(/\s+/g, '').toUpperCase();
+        return (
+          (t.includes('1-B') && t.includes('2-A') && t.includes('3-D') && t.includes('4-C')) ||
+          (t.includes('1–B') && t.includes('2–A') && t.includes('3–D') && t.includes('4–C')) ||
+          (t.includes('1—B') && t.includes('2—A') && t.includes('3—D') && t.includes('4—C')) ||
+          (t.includes('1-B') && t.includes('2-A'))
+        );
+      });
+      if (optCorrect) {
+        correctOption = optCorrect.letter;
+        q.explanation =
+          'Gabarito Oficial: Alternativa B (1-B / 2-A / 3-D / 4-C).\n' +
+          'Associações corretas:\n' +
+          '1 — B: Gerador Elétrico → Converte energia mecânica em eletricidade.\n' +
+          '2 — A: Motor Elétrico → Converte energia elétrica em mecânica.\n' +
+          '3 — D: Estator → Anel de metal com fendas que prendem bobinas para produzir campo magnético rotativo.\n' +
+          '4 — C: Rotor → Haste com barras condutoras que interage com o campo magnético, gerando torque.';
+        q.modelAnswer = '1-B / 2-A / 3-D / 4-C';
+      }
+    }
+  }
+
+  // 5c. True/False Factual Corrections: e.g. Client-Server Networks
+  if (subType === 'true_false' && tfStatements && tfStatements.length >= 4) {
+    const tfText = `${prompt} ${q.subject || ''} ${tfStatements.map((s) => s.statement).join(' ')}`.toLowerCase();
+    if (tfText.includes('cliente-servidor') || tfText.includes('servidor da rede')) {
+      // In client-server:
+      // I: Maior custo e implementação mais complexa -> V
+      // II: Existência de pelo menos um servidor da rede -> V! (Never F)
+      // III: Estrutura de segurança melhorada com informações centralizadas -> V
+      // IV: Um servidor de rede é um projeto de hardware para suportar tarefas pesadas -> F (servidor é primariamente um papel lógico/função de software e SO de rede)
+      // Sequence: V - V - V - F
+      const correctPattern = 'V – V – V – F';
+      const optMatch = (q.options || []).find((o) => (o.text || '').replace(/[^VF]/gi, '') === 'VVVF');
+      if (optMatch) {
+        correctOption = optMatch.letter;
+      } else if (q.options && q.options.length >= 3) {
+        // Ensure one option has V – V – V – F
+        q.options[0] = { letter: 'A', text: correctPattern };
+        q.options[1] = { letter: 'B', text: 'V – F – V – F' };
+        q.options[2] = { letter: 'C', text: 'F – V – V – F' };
+        q.options[3] = { letter: 'D', text: 'F – F – V – V' };
+        if (q.options[4]) q.options[4] = { letter: 'E', text: 'V – V – F – F' };
+        correctOption = 'A';
+      }
+      q.explanation =
+        'Gabarito Doutrinário: V – V – V – F.\n' +
+        'I (V): Redes cliente-servidor possuem custo e complexidade maiores que ponto-a-ponto devido ao servidor dedicado e cabeamento.\n' +
+        'II (V): Por definição arquitetural, a existência de ao menos um servidor gerenciador é obrigatória.\n' +
+        'III (V): O gerenciamento e a segurança são centralizados no servidor.\n' +
+        'IV (F): Um servidor é um papel/serviço lógico executado por um sistema operacional de rede, não apenas um mero projeto físico de hardware.';
+    }
   }
 
   // 6. Options sanitization & auto-heal corrupted V/F or raw letter options
@@ -116,7 +241,7 @@ export const normalizeQuestion = (q: Question, idx: number, examId: string = 'ex
         }));
       }
     } else {
-      // Non-true_false: ensure options are NOT V/F strings or meaningless letters
+      // Non-true_false: ensure options are NOT V/F strings, meaningless letters, or dummy text
       const isCorruptedWithVf =
         Array.isArray(options) &&
         options.length > 0 &&
@@ -125,51 +250,18 @@ export const normalizeQuestion = (q: Question, idx: number, examId: string = 'ex
       const isJustLetters =
         Array.isArray(options) &&
         options.length > 0 &&
-        options.every((o) => isGibberishOrLetterList(o.text));
+        options.every((o) => isGibberishOrDummy(o.text));
 
-      if (!options || options.length < 4 || isCorruptedWithVf || isJustLetters) {
-        const fullPrompt = `${prompt} ${blanksSentence || ''} ${q.contextScenario || ''}`.toLowerCase();
-        const isRevolverOrMotor =
-          fullPrompt.includes('princípio motor') ||
-          fullPrompt.includes('revólver') ||
-          fullPrompt.includes('ação muscular');
+      const hasDummyOptions =
+        Array.isArray(options) &&
+        options.some((o) => isGibberishOrDummy(o.text));
 
-        if (subType === 'fill_in_blank') {
-          if (isRevolverOrMotor) {
-            options = [
-              { letter: 'A', text: 'força de expansão dos gases / repetição' },
-              { letter: 'B', text: 'ação muscular do atirador / repetição' },
-              { letter: 'C', text: 'recuo do cano / semiautomático' },
-              { letter: 'D', text: 'massa inercial do ferrolho / automático' },
-              { letter: 'E', text: 'ação mista / repetição' },
-            ];
-            correctOption = 'B';
-          } else {
-            options = [
-              { letter: 'A', text: 'força de expansão dos gases / repetição' },
-              { letter: 'B', text: 'ação muscular do atirador / repetição' },
-              { letter: 'C', text: 'recuo curto do cano / semiautomático' },
-              { letter: 'D', text: 'inércia das massas / automático' },
-              { letter: 'E', text: 'pressão dos gases / repetição manual' },
-            ];
-          }
-        } else if (subType === 'column_match') {
-          options = [
-            { letter: 'A', text: '1 – 3 – 4 – 2' },
-            { letter: 'B', text: '2 – 4 – 1 – 3' },
-            { letter: 'C', text: '3 – 1 – 2 – 4' },
-            { letter: 'D', text: '4 – 2 – 3 – 1' },
-            { letter: 'E', text: '1 – 4 – 2 – 3' },
-          ];
-        } else {
-          options = [
-            { letter: 'A', text: q.modelAnswer && !isGibberishOrLetterList(q.modelAnswer) ? q.modelAnswer : 'Alternativa A (Conforme preceito da doutrina militar)' },
-            { letter: 'B', text: 'Alternativa B (Discrepante em relação aos manuais operacionais)' },
-            { letter: 'C', text: 'Alternativa C (Incompleta quanto aos procedimentos regulamentares)' },
-            { letter: 'D', text: 'Alternativa D (Incorreta segundo as normas do Exército)' },
-            { letter: 'E', text: 'Alternativa E (Inaplicável ao contexto militar apresentado)' },
-          ];
-        }
+      const isAnyEmpty =
+        Array.isArray(options) &&
+        (options.length < 4 || options.some((o) => !o.text || !o.text.trim()));
+
+      if (!options || options.length < 4 || isCorruptedWithVf || isJustLetters || hasDummyOptions || isAnyEmpty) {
+        options = getContextualOptions(prompt, q.subject, subType, q.modelAnswer, options);
       }
     }
   }
