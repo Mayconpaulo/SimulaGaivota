@@ -3,6 +3,26 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <script>
+      (function() {
+        var APP_BUILD = '20261103_2005';
+        var current = localStorage.getItem('__sg_build__');
+        if (current !== APP_BUILD) {
+          localStorage.setItem('__sg_build__', APP_BUILD);
+          if ('caches' in window) {
+            caches.keys().then(function(keys) {
+              return Promise.all(keys.map(function(k) { return caches.delete(k); }));
+            }).then(function() {
+              if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistrations().then(function(regs) {
+                  for (var i = 0; i < regs.length; i++) regs[i].unregister();
+                });
+              }
+            });
+          }
+        }
+      })();
+    </script>
     <title>SimulaGaivota - CFST 26/2</title>
     <meta name="description" content="Plataforma de estudos militares para o CFST 26/2 com sistema oficial de avaliação por gaivotas, questões de múltipla escolha e discursivas." />
     <meta name="theme-color" content="#03060a" />

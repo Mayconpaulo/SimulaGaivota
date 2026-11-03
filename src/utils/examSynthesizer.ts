@@ -331,14 +331,82 @@ function synthesizeFromCustomText(customText: string, index: number): Question |
   const sentences = customText
     .split(/[.?!;\n]+/)
     .map((s) => s.trim().replace(/\s+/g, ' '))
-    .filter((s) => s.length >= 40 && s.length <= 250 && !/^(slide|página|capítulo|sumário)/i.test(s));
+    .filter((s) => s.length >= 35 && s.length <= 260 && !/^(slide|página|capítulo|sumário)/i.test(s));
 
   if (sentences.length === 0) return null;
 
-  // Pick a sentence based on index
-  const chosenSentence = sentences[index % sentences.length];
+  const mode = index % 3;
 
-  // Try to find key technical terms
+  // Mode 1: True / False using 4 distinct sentences from the file
+  if (mode === 1 && sentences.length >= 4) {
+    const s1 = sentences[index % sentences.length];
+    const s2 = sentences[(index + 1) % sentences.length];
+    const s3 = sentences[(index + 2) % sentences.length];
+    const s4 = sentences[(index + 3) % sentences.length];
+
+    return {
+      id: `custom-tf-${index + 1}`,
+      number: index + 1,
+      type: 'objective',
+      subType: 'true_false',
+      difficulty: 'medio',
+      subject: 'Doutrina dos Arquivos Anexados',
+      prompt: 'Com base nas instruções e normas técnicas do documento anexado, julgue as afirmativas em Verdadeiro (V) ou Falso (F) e assinale a alternativa com a sequência correta:',
+      tfStatements: [
+        { numeral: 'I', statement: s1 },
+        { numeral: 'II', statement: s2 },
+        { numeral: 'III', statement: s3 },
+        { numeral: 'IV', statement: s4 },
+      ],
+      options: [
+        { letter: 'A', text: 'V – V – V – V' },
+        { letter: 'B', text: 'V – F – V – F' },
+        { letter: 'C', text: 'F – V – V – V' },
+        { letter: 'D', text: 'V – V – F – F' },
+        { letter: 'E', text: 'F – F – V – V' },
+      ],
+      correctOption: 'A',
+      modelAnswer: 'V – V – V – V. Todas as proposições foram extraídas com rigor literal do documento fornecido.',
+      explanation: `Todas as sentenças constam no material anexado: I) "${s1.slice(0, 80)}..."; II) "${s2.slice(0, 80)}...".`,
+      cardDirectFact: {
+        frontPrompt: `Diretriz doutrinária do documento:`,
+        backAnswer: `${s1.slice(0, 100)}...`,
+      },
+      totalGaivotas: 1,
+    };
+  }
+
+  // Mode 2: Discursive Question with 3 Gaivotas (✓)
+  if (mode === 2 && sentences.length >= 2) {
+    const s1 = sentences[index % sentences.length];
+    const words = s1.split(' ').filter((w) => w.length > 5);
+    const keyTerm = words[0]?.replace(/[^a-zA-Z0-9À-ÿ]/g, '') || 'o tema';
+
+    return {
+      id: `custom-disc-${index + 1}`,
+      number: index + 1,
+      type: 'discursive',
+      subType: 'standard',
+      difficulty: 'dificil',
+      subject: 'Doutrina dos Arquivos Anexados',
+      prompt: `Com base no conteúdo dos arquivos anexados referente a "${keyTerm}", discorra sobre a aplicação prática e os requisitos doutrinários essenciais, contemplando os critérios de avaliação abaixo:`,
+      totalGaivotas: 3,
+      criteria: [
+        { id: `crit-${index}-1`, description: `Definição e finalidade geral citadas no texto`, gaivotas: 1 },
+        { id: `crit-${index}-2`, description: `Procedimentos técnicos ou regulamentares aplicáveis`, gaivotas: 1 },
+        { id: `crit-${index}-3`, description: `Observância das normas de segurança e disciplina da instrução`, gaivotas: 1 },
+      ],
+      modelAnswer: `Resposta esperada: O candidato deve explicitar que "${s1}". Abordar os preceitos regulamentares e a segurança militar.`,
+      explanation: `Trecho oficial de referência: "${s1}".`,
+      cardDirectFact: {
+        frontPrompt: `Conceito vital extraído do documento (${keyTerm}):`,
+        backAnswer: s1.slice(0, 110) + '...',
+      },
+    };
+  }
+
+  // Mode 0: Fill-in-the-blank (lacunas)
+  const chosenSentence = sentences[index % sentences.length];
   const words = chosenSentence.split(' ').filter((w) => w.length > 5);
   if (words.length < 3) return null;
 
@@ -366,7 +434,7 @@ function synthesizeFromCustomText(customText: string, index: number): Question |
     type: 'objective',
     subType: 'fill_in_blank',
     difficulty: 'medio',
-    subject: 'Matéria do Documento Anexado',
+    subject: 'Doutrina dos Arquivos Anexados',
     prompt: 'Com base no documento militar fornecido, assinale a alternativa que preenche corretamente as lacunas:',
     blanksSentence: blanked,
     options: [
@@ -387,26 +455,34 @@ function synthesizeFromCustomText(customText: string, index: number): Question |
   };
 }
 
-export function generateExamFromMaterialsFallback(params: FallbackExamParams): Exam {
-  const {
-    courseType = 'CFST',
-    subject = 'Matérias Gerais',
-    materialText = '',
-    pastExamModel = '',
-    questionCount = 5,
-    difficulty = 'medio',
-    files = [],
-    excludePrompts = [],
-    missedQuestions = [],
-  } = params;
+export function generateExamFromMaterialsFallback(params?: FallbackExamParams): Exam {
+  const safeParams = params || {};
+  const courseType = safeParams.courseType || 'CFST';
+  const subject = typeof safeParams.subject === 'string' ? safeParams.subject : 'Matérias Gerais';
+  const materialText = typeof safeParams.materialText === 'string' ? safeParams.materialText : '';
+  const targetCount = Math.max(1, parseInt(String(safeParams.questionCount), 10) || 5);
+  const difficulty = safeParams.difficulty || 'medio';
+  
+  const rawFiles = Array.isArray(safeParams.files) ? safeParams.files : [];
+  const safeFiles = rawFiles.filter((f): f is { name: string; mimeType?: string; base64?: string; text?: string } => 
+    Boolean(f && typeof f === 'object')
+  );
 
-  // 1. Gather all file texts and filenames
-  const attachedFileNames = files.map((f) => (f.name || '').toLowerCase()).join(' ');
+  const rawExclude = Array.isArray(safeParams.excludePrompts) ? safeParams.excludePrompts : [];
+  const safeExcludePrompts = rawExclude
+    .filter(Boolean)
+    .map((p) => String(p).trim().toLowerCase().slice(0, 45));
+
+  const rawMissed = Array.isArray(safeParams.missedQuestions) ? safeParams.missedQuestions : [];
+  const safeMissedQuestions = rawMissed.filter(Boolean);
+
+  // 1. Gather all file texts and filenames safely
+  const attachedFileNames = safeFiles.map((f) => (typeof f.name === 'string' ? f.name : '').toLowerCase()).join(' ');
   const combinedFileText = [
     attachedFileNames,
     subject.toLowerCase(),
     materialText.toLowerCase(),
-    ...files.map((f) => (f.text || '').toLowerCase().slice(0, 15000)),
+    ...safeFiles.map((f) => (typeof f.text === 'string' ? f.text : '').toLowerCase().slice(0, 15000)),
   ].join(' ');
 
   // 2. Identify relevant subjects
@@ -415,11 +491,12 @@ export function generateExamFromMaterialsFallback(params: FallbackExamParams): E
     combinedFileText.includes('fal') ||
     combinedFileText.includes('tiro') ||
     combinedFileText.includes('pistola') ||
-    combinedFileText.includes('bizu_armamento');
+    combinedFileText.includes('bizu_armamento') ||
+    combinedFileText.includes('bizu armamento');
 
   const isCom =
     combinedFileText.includes('comunica') ||
-    combinedFileText.includes('explora__o_das_comunica') ||
+    combinedFileText.includes('explora') ||
     combinedFileText.includes('meios de comunica') ||
     combinedFileText.includes('bescom') ||
     combinedFileText.includes('ebnet');
@@ -447,17 +524,16 @@ export function generateExamFromMaterialsFallback(params: FallbackExamParams): E
 
   // 3. Pool questions from OFFICIAL_EXAMS and ADDITIONAL_MILITARY_QUESTIONS
   const candidatePool: Question[] = [];
-
-  // Helper to test if a question matches matched subjects or if any subject is allowed
   const hasSubjectMatch = isArmt || isCom || isRad || isSrdt || isLid;
 
   const allAvailableExams = [...OFFICIAL_EXAMS];
-  const allOfficialQuestions = allAvailableExams.flatMap((e) => e.questions);
+  const allOfficialQuestions = allAvailableExams.flatMap((e) => e.questions || []);
   const combinedOfficialAndExtra = [...allOfficialQuestions, ...ADDITIONAL_MILITARY_QUESTIONS];
 
   for (const q of combinedOfficialAndExtra) {
+    if (!q) continue;
     const qSub = (q.subject || '').toLowerCase();
-    const qText = `${q.prompt} ${q.modelAnswer || ''}`.toLowerCase();
+    const qText = `${q.prompt || ''} ${q.modelAnswer || ''}`.toLowerCase();
 
     let matched = false;
     if (!hasSubjectMatch) {
@@ -480,35 +556,41 @@ export function generateExamFromMaterialsFallback(params: FallbackExamParams): E
     candidatePool.push(...combinedOfficialAndExtra);
   }
 
-  // 4. Try synthesizing 1-2 questions directly from custom uploaded text if text is substantial
-  const allCustomText = [materialText, ...files.map((f) => f.text || '')].join('\n');
-  if (allCustomText.length > 300) {
-    for (let i = 0; i < 3; i++) {
-      const synth = synthesizeFromCustomText(allCustomText, i);
-      if (synth) candidatePool.unshift(synth);
+  // 4. Synthesize questions directly from custom uploaded text if text is present
+  const allCustomText = [materialText, ...safeFiles.map((f) => (typeof f.text === 'string' ? f.text : ''))].join('\n');
+  if (allCustomText.length > 150) {
+    const numToSynthesize = Math.min(40, Math.max(6, Math.floor(targetCount * 0.4)));
+    for (let i = 0; i < numToSynthesize; i++) {
+      try {
+        const synth = synthesizeFromCustomText(allCustomText, i);
+        if (synth) candidatePool.unshift(synth);
+      } catch {
+        // Safe skip on synthetic text error
+      }
     }
   }
 
-  // 5. Exclude prompts in excludePrompts to guarantee fresh questions
-  const cleanExcludeSet = new Set(
-    (excludePrompts || []).map((p) => p.trim().toLowerCase().slice(0, 45))
-  );
+  // 5. Exclude prompts in safeExcludePrompts to guarantee fresh questions
+  const cleanExcludeSet = new Set(safeExcludePrompts);
 
   let filteredPool = candidatePool.filter(
     (q) => !cleanExcludeSet.has((q.prompt || '').trim().toLowerCase().slice(0, 45))
   );
 
   // If filtering excluded too many, restore candidate pool
-  if (filteredPool.length < questionCount) {
+  if (filteredPool.length < targetCount) {
     filteredPool = [...candidatePool];
   }
+  if (filteredPool.length === 0) {
+    filteredPool = [...combinedOfficialAndExtra];
+  }
 
-  // 6. Shuffle deterministically/non-deterministically
+  // 6. Shuffle
   const shuffled = [...filteredPool].sort(() => Math.random() - 0.5);
 
   // Prioritize spaced repetition concepts if provided
-  if (missedQuestions && missedQuestions.length > 0) {
-    const missedTopics = missedQuestions.map((m) => (m.prompt || m.subject || '').toLowerCase());
+  if (safeMissedQuestions.length > 0) {
+    const missedTopics = safeMissedQuestions.map((m: any) => String(m.prompt || m.subject || '').toLowerCase());
     shuffled.sort((a, b) => {
       const aMatches = missedTopics.some((t) => (a.prompt || '').toLowerCase().includes(t.slice(0, 20)));
       const bMatches = missedTopics.some((t) => (b.prompt || '').toLowerCase().includes(t.slice(0, 20)));
@@ -517,11 +599,12 @@ export function generateExamFromMaterialsFallback(params: FallbackExamParams): E
   }
 
   // Slice or expand to requested questionCount (min 1, max requested)
-  const targetCount = Math.max(1, questionCount);
   const selectedQuestions: Question[] = [];
   let currentIdx = 0;
-  while (selectedQuestions.length < targetCount && shuffled.length > 0) {
-    const baseQ = shuffled[currentIdx % shuffled.length];
+  const poolToUse = shuffled.length > 0 ? shuffled : combinedOfficialAndExtra;
+
+  while (selectedQuestions.length < targetCount && poolToUse.length > 0) {
+    const baseQ = poolToUse[currentIdx % poolToUse.length];
     const qNum = selectedQuestions.length + 1;
     selectedQuestions.push({
       ...baseQ,
@@ -533,10 +616,14 @@ export function generateExamFromMaterialsFallback(params: FallbackExamParams): E
     currentIdx++;
   }
 
-  // Build subject title
+  // Build subject title safely
   let finalSubject = subject;
-  if (files && files.length > 0) {
-    finalSubject = files.map((f) => f.name.replace(/\.[^/.]+$/, '').replace(/_/g, ' ')).slice(0, 2).join(' & ');
+  if (safeFiles.length > 0) {
+    finalSubject = safeFiles
+      .map((f) => (typeof f.name === 'string' ? f.name : '').replace(/\.[^/.]+$/, '').replace(/_/g, ' '))
+      .filter((s) => s.length > 0)
+      .slice(0, 2)
+      .join(' & ');
   }
 
   return {

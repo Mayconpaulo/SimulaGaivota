@@ -5,6 +5,7 @@ interface NavbarProps {
   onSelectTab: (tab: 'simulados' | 'flashcards' | 'criptografia' | 'materiais' | 'desempenho') => void;
   onOpenStudySetup: () => void;
   onOpenInstallModal: () => void;
+  onOpenApiKeyModal?: () => void;
   totalGaivotasEarned: number;
 }
 
@@ -13,6 +14,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onSelectTab,
   onOpenStudySetup,
   onOpenInstallModal,
+  onOpenApiKeyModal,
   totalGaivotasEarned,
 }) => {
   return (
@@ -102,7 +104,21 @@ export const Navbar: React.FC<NavbarProps> = ({
         </nav>
 
         {/* Zone 3: Primary Action + Baixar no Celular CTA */}
-        <div className="flex items-center gap-2.5 shrink-0">
+        <div className="flex items-center gap-2 shrink-0">
+          {/* Generator Status / Diagnostic Modal Trigger */}
+          {onOpenApiKeyModal && (
+            <button
+              type="button"
+              onClick={onOpenApiKeyModal}
+              title="Status do Motor de Questões Militar CFST"
+              className="px-2.5 py-1.5 text-xs font-semibold text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-400/30 rounded-xl transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer"
+            >
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="hidden md:inline">Motor Militar</span>
+              <span className="md:hidden">Motor</span>
+            </button>
+          )}
+
           {/* Install on Mobile App button */}
           <button
             type="button"

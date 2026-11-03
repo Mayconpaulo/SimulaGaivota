@@ -17,10 +17,13 @@ import { StudyConfigModal } from './components/StudyConfigModal';
 import { PWAInstallModal } from './components/PWAInstallModal';
 import { OfflineIndicator } from './components/OfflineIndicator';
 import { AutoUpdater } from './components/AutoUpdater';
+import { ApiKeyModal } from './components/ApiKeyModal';
 import { generateQuestionsForCFST } from './data/questionGenerator';
 import { normalizeQuestion } from './utils/questionNormalizer';
+import { generateExamFromMaterialsFallback } from './utils/examSynthesizer';
 
 export default function App() {
+  const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState(false);
   const [exams, setExams] = useState<Exam[]>(() => {
     try {
       // Clear legacy storage keys
@@ -349,52 +352,32 @@ export default function App() {
 
       let uploadQuestions: Question[] = [];
       if ((config.uploadedDocs && config.uploadedDocs.length > 0) || config.uploadedText) {
-        setIsGeneratingAIExam(true);
+        const desiredFromUpload = Math.max(2, Math.round((config.questionCount || 10) / 2));
+        const sanitizedUploadDocs = (config.uploadedDocs || []).map((file) => ({
+          name: file.name,
+          mimeType: file.mimeType,
+          text: (file.text || '').slice(0, 50000),
+          size: file.size,
+        }));
+
         try {
-          const sanitizedUploadDocs = (config.uploadedDocs || []).map((file) => {
-            if (file.text && file.text.length > 20) {
-              return {
-                name: file.name,
-                mimeType: file.mimeType,
-                text: file.text,
-                size: file.size,
-              };
-            }
-            return file;
+          const fallbackExam = generateExamFromMaterialsFallback({
+            courseType: 'CFST',
+            subject: config.uploadedDocs && config.uploadedDocs.length > 0
+              ? config.uploadedDocs.map((d) => d.name).slice(0, 2).join(' & ')
+              : 'Novo Material',
+            questionCount: desiredFromUpload,
+            difficulty: config.difficulty,
+            files: sanitizedUploadDocs,
+            materialText: config.uploadedText || '',
+            excludePrompts: config.avoidRepeatedQuestions !== false ? seenQuestionPrompts : [],
+            missedQuestions: config.enableSpacedRepetition ? missedQuestionsList : [],
           });
-
-          const desiredFromUpload = Math.max(2, Math.round((config.questionCount || 10) / 2));
-          const res = await fetch('/api/generate-exam', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              courseType: 'CFST',
-              subject: config.uploadedDocs && config.uploadedDocs.length > 0
-                ? config.uploadedDocs.map((d) => d.name).slice(0, 2).join(' & ')
-                : 'Novo Material',
-              questionCount: desiredFromUpload,
-              difficulty: config.difficulty,
-              files: sanitizedUploadDocs,
-              materialText: config.uploadedText || '',
-              excludePrompts: config.avoidRepeatedQuestions !== false ? seenQuestionPrompts : [],
-              missedQuestions: config.enableSpacedRepetition
-                ? missedQuestionsList.map((q) => ({ id: q.id, prompt: q.prompt, subject: q.subject }))
-                : [],
-              avoidRepeatedQuestions: config.avoidRepeatedQuestions !== false,
-              enableSpacedRepetition: Boolean(config.enableSpacedRepetition),
-            }),
-          });
-
-          if (res.ok) {
-            const examData = await res.json();
-            if (examData.questions && Array.isArray(examData.questions)) {
-              uploadQuestions = examData.questions;
-            }
+          if (fallbackExam.questions && fallbackExam.questions.length > 0) {
+            uploadQuestions = fallbackExam.questions;
           }
-        } catch (e) {
-          console.warn('Erro ao processar novos arquivos no modo misto:', e);
-        } finally {
-          setIsGeneratingAIExam(false);
+        } catch (synthErr) {
+          console.warn('[App.tsx] Fallback misto falhou:', synthErr);
         }
       }
 
@@ -440,82 +423,52 @@ export default function App() {
       else if (config.mode === 'flashcards') setActiveTab('flashcards');
       return;
     } else if (config.materialSource === 'upload') {
-      // If user uploaded docs or text, call the real AI endpoint
-      if ((config.uploadedDocs && config.uploadedDocs.length > 0) || config.uploadedText) {
-        setIsGeneratingAIExam(true);
-        try {
-          const sanitizedUploadDocs = (config.uploadedDocs || []).map((file) => {
-            if (file.text && file.text.length > 20) {
-              return {
-                name: file.name,
-                mimeType: file.mimeType,
-                text: file.text,
-                size: file.size,
-              };
-            }
-            return file;
-          });
+      const sanitizedUploadDocs = (config.uploadedDocs || []).map((file) => ({
+        name: file.name,
+        mimeType: file.mimeType,
+        text: (file.text || '').slice(0, 50000),
+        size: file.size,
+      }));
 
-          const res = await fetch('/api/generate-exam', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              courseType: 'CFST',
-              subject: config.uploadedDocs && config.uploadedDocs.length > 0
-                ? config.uploadedDocs.map((d) => d.name).slice(0, 2).join(' & ')
-                : 'Material Próprio',
-              questionCount: config.questionCount,
-              difficulty: config.difficulty,
-              files: sanitizedUploadDocs,
-              materialText: config.uploadedText || '',
-              excludePrompts: config.avoidRepeatedQuestions !== false ? seenQuestionPrompts : [],
-              missedQuestions: config.enableSpacedRepetition
-                ? missedQuestionsList.map((q) => ({ id: q.id, prompt: q.prompt, subject: q.subject }))
-                : [],
-              avoidRepeatedQuestions: config.avoidRepeatedQuestions !== false,
-              enableSpacedRepetition: Boolean(config.enableSpacedRepetition),
-            }),
-          });
+      const examData = generateExamFromMaterialsFallback({
+        courseType: 'CFST',
+        subject: config.uploadedDocs && config.uploadedDocs.length > 0
+          ? config.uploadedDocs.map((d) => d.name).slice(0, 2).join(' & ')
+          : 'Material Próprio',
+        questionCount: config.questionCount || 5,
+        difficulty: config.difficulty || 'medio',
+        files: sanitizedUploadDocs,
+        materialText: config.uploadedText || '',
+        excludePrompts: config.avoidRepeatedQuestions !== false ? seenQuestionPrompts : [],
+        missedQuestions: config.enableSpacedRepetition ? missedQuestionsList : [],
+        avoidRepeatedQuestions: config.avoidRepeatedQuestions !== false,
+        enableSpacedRepetition: Boolean(config.enableSpacedRepetition),
+      });
 
-          if (res.ok) {
-            const examData = await res.json();
-            const aiExamId = `custom-exam-${Date.now()}`;
-            const aiExam: Exam = {
-              id: aiExamId,
-              title: 'SIMULADO',
-              course: 'CFST',
-              subject: config.uploadedDocs && config.uploadedDocs.length > 0
-                ? config.uploadedDocs.map((d) => d.name).slice(0, 2).join(' & ')
-                : examData.subject || 'Material Próprio',
-              institution: 'CFST 26/2',
-              instructions:
-                examData.instructions ||
-                'Simulado formulado exclusivamente a partir dos arquivos fornecidos.',
-              totalTimeMinutes: examData.totalTimeMinutes || config.questionCount * 15,
-              questions: (examData.questions || []).map((q: any, idx: number) =>
-                normalizeQuestion(q, idx, aiExamId)
-              ),
-              isCustom: true,
-              createdAt: new Date().toISOString(),
-            };
+      const aiExamId = `custom-exam-${Date.now()}`;
+      const aiExam: Exam = {
+        id: aiExamId,
+        title: 'SIMULADO',
+        course: 'CFST',
+        subject: config.uploadedDocs && config.uploadedDocs.length > 0
+          ? config.uploadedDocs.map((d) => d.name).slice(0, 2).join(' & ')
+          : examData.subject || 'Material Próprio',
+        institution: 'CFST 26/2',
+        instructions:
+          examData.instructions ||
+          'Simulado formulado exclusivamente a partir dos arquivos fornecidos.',
+        totalTimeMinutes: examData.totalTimeMinutes || (config.questionCount || 5) * 15,
+        questions: (examData.questions || []).map((q: any, idx: number) =>
+          normalizeQuestion(q, idx, aiExamId)
+        ),
+        isCustom: true,
+        createdAt: new Date().toISOString(),
+      };
 
-            setExams((prev) => [aiExam, ...prev]);
-            setActiveExamId(aiExam.id);
-            if (config.mode === 'simulado') setActiveTab('simulados');
-            else if (config.mode === 'flashcards') setActiveTab('flashcards');
-            setIsGeneratingAIExam(false);
-            return;
-          }
-        } catch (e) {
-          console.error('Erro ao gerar com IA a partir dos arquivos:', e);
-        } finally {
-          setIsGeneratingAIExam(false);
-        }
-      }
-
-      // If generation could not proceed
-      alert('Não foi possível gerar o simulado a partir dos arquivos. Por favor, verifique os arquivos anexados na aba de materiais.');
-      setActiveTab('materiais');
+      setExams((prev) => [aiExam, ...prev]);
+      setActiveExamId(aiExam.id);
+      if (config.mode === 'simulado') setActiveTab('simulados');
+      else if (config.mode === 'flashcards') setActiveTab('flashcards');
       return;
     }
 
@@ -582,6 +535,7 @@ export default function App() {
           onSelectTab={setActiveTab}
           onOpenStudySetup={() => setIsStudySetupOpen(true)}
           onOpenInstallModal={() => setIsInstallModalOpen(true)}
+          onOpenApiKeyModal={() => setIsApiKeyModalOpen(true)}
           totalGaivotasEarned={totalGaivotasEarned}
         />
       </div>
@@ -788,6 +742,12 @@ export default function App() {
 
       {/* Offline Status Toast */}
       <OfflineIndicator />
+
+      {/* API Key Diagnostic Modal */}
+      <ApiKeyModal
+        isOpen={isApiKeyModalOpen}
+        onClose={() => setIsApiKeyModalOpen(false)}
+      />
     </div>
   );
 }

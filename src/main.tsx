@@ -16,6 +16,15 @@ if ('serviceWorker' in navigator) {
     }).catch(() => {});
   } else {
     // In production, safely register service worker with error handling
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!refreshing) {
+        refreshing = true;
+        console.log('Novo Service Worker assumiu o controle, recarregando...');
+        window.location.reload();
+      }
+    });
+
     const updateSW = registerSW({
       immediate: true,
       onNeedRefresh() {
@@ -26,7 +35,7 @@ if ('serviceWorker' in navigator) {
         if (registration) {
           setInterval(() => {
             registration.update().catch(() => {});
-          }, 60000);
+          }, 30000);
         }
       },
       onRegisterError(error) {
